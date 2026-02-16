@@ -69,9 +69,9 @@ export default function OnboardingPage() {
               <span
                 className={`flex h-9 w-9 items-center justify-center rounded-full border-2 ${
                   step > s.id
-                    ? "border-primary bg-primary"
+                    ? "border-white bg-white"
                     : step === s.id
-                    ? "border-primary bg-primary"
+                    ? "border-white bg-white"
                     : "border-white/50"
                 }`}
               >
@@ -126,7 +126,7 @@ export default function OnboardingPage() {
                 />
                 <button
                   type="submit"
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary text-white font-semibold py-3.5 hover:bg-primary/90"
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-navy text-white font-semibold py-3.5 hover:bg-navy/90"
                 >
                   Continue
                   <ArrowRight className="w-5 h-5" />
@@ -147,7 +147,7 @@ export default function OnboardingPage() {
                     type="checkbox"
                     checked={addEmployee}
                     onChange={(e) => setAddEmployee(e.target.checked)}
-                    className="rounded border-gray-300 text-primary focus:ring-primary"
+                    className="rounded border-gray-300 text-navy focus:ring-navy"
                   />
                   <span className="text-sm font-medium text-navy">
                     Add a team member now
@@ -183,7 +183,7 @@ export default function OnboardingPage() {
                         onChange={(e) =>
                           setEmployee((p) => ({ ...p, role: e.target.value }))
                         }
-                        className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-navy focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                        className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-navy focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none"
                       >
                         <option value="Admin">Admin</option>
                         <option value="Staff">Staff</option>
@@ -203,7 +203,7 @@ export default function OnboardingPage() {
                   <button
                     type="button"
                     onClick={() => setStep(3)}
-                    className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary text-white font-semibold py-3.5 hover:bg-primary/90"
+                    className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-navy text-white font-semibold py-3.5 hover:bg-navy/90"
                   >
                     Continue
                     <ArrowRight className="w-5 h-5" />
@@ -227,7 +227,7 @@ export default function OnboardingPage() {
                     onClick={() => setSelectedPlan(plan.id)}
                     className={`w-full text-left rounded-xl border-2 p-4 transition-colors ${
                       selectedPlan === plan.id
-                        ? "border-primary bg-primary/5"
+                        ? "border-navy bg-navy/5"
                         : "border-gray-200 hover:border-gray-300"
                     }`}
                   >
@@ -252,7 +252,7 @@ export default function OnboardingPage() {
                   <button
                     type="button"
                     onClick={handleFinish}
-                    className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary text-white font-semibold py-3.5 hover:bg-primary/90"
+                    className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-navy text-white font-semibold py-3.5 hover:bg-navy/90"
                   >
                     Get started
                     <ArrowRight className="w-5 h-5" />

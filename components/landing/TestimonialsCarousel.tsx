@@ -1,7 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Quote } from "lucide-react";
+import { useState } from "react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import type { Swiper as SwiperType } from "swiper";
+import { Autoplay, EffectFade, Pagination } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/effect-fade";
+import "swiper/css/pagination";
 
 const testimonials = [
   {
@@ -22,56 +27,98 @@ const testimonials = [
 ];
 
 export function TestimonialsCarousel() {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const len = testimonials.length;
-
-  const goPrev = () => setActiveIndex((i) => (i - 1 + len) % len);
-  const goNext = () => setActiveIndex((i) => (i + 1) % len);
+  const [swiperInstance, setSwiperInstance] = useState<SwiperType | null>(null);
 
   return (
-    <section className="py-16 lg:py-24 bg-[#f1f5f9] font-onest">
+    <section className="py-16 lg:py-24 bg-[#f0f4f8] font-onest overflow-hidden testimonials-section">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative flex items-center gap-4">
+        <div className="relative">
+          <span
+            className="absolute left-1/2 -translate-x-1/2 -top-2 text-[5rem] sm:text-[6rem] font-serif text-white/90 select-none pointer-events-none leading-none z-0"
+            aria-hidden
+          >
+            &ldquo;
+          </span>
+
+          <Swiper
+            modules={[Autoplay, EffectFade, Pagination]}
+            spaceBetween={0}
+            slidesPerView={1}
+            effect="fade"
+            fadeEffect={{ crossFade: true }}
+            speed={600}
+            loop={true}
+            autoplay={{
+              delay: 5500,
+              disableOnInteraction: false,
+              pauseOnMouseEnter: true,
+            }}
+            pagination={{
+              el: ".testimonials-pagination",
+              clickable: true,
+              bulletClass: "testimonial-bullet",
+              bulletActiveClass: "testimonial-bullet-active",
+            }}
+            className="testimonials-swiper"
+            onSwiper={setSwiperInstance}
+          >
+            {testimonials.map((t, i) => (
+              <SwiperSlide key={i}>
+                <div className="pt-12 pb-4 px-2 sm:px-6 relative z-10">
+                  <blockquote className="text-xl sm:text-2xl lg:text-3xl text-navy font-medium leading-relaxed text-center">
+                    {t.quote}
+                  </blockquote>
+                  <p className="mt-8 text-center text-muted-foreground font-medium">
+                    {t.attribution}
+                  </p>
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+
           <button
             type="button"
-            onClick={goPrev}
-            className="p-2 rounded-full border border-gray-200 bg-white text-navy hover:bg-gray-50 transition-colors shrink-0"
+            onClick={() => swiperInstance?.slidePrev()}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white border border-gray-200 shadow-md text-navy hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center -translate-x-1/2 lg:translate-x-0 lg:left-4 cursor-pointer"
             aria-label="Previous testimonial"
           >
-            <ChevronLeft className="w-6 h-6" />
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
           </button>
-          <div className="flex-1 min-w-0 text-center">
-            <Quote className="w-12 h-12 text-primary/30 mx-auto mb-4" aria-hidden />
-            <blockquote className="text-xl sm:text-2xl text-navy font-medium leading-relaxed">
-              {testimonials[activeIndex].quote}
-            </blockquote>
-            <p className="mt-6 text-muted-foreground">
-              {testimonials[activeIndex].attribution}
-            </p>
-            <div className="mt-6 flex justify-center gap-2">
-              {testimonials.map((_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setActiveIndex(i)}
-                  className={`h-2 rounded-full transition-all ${
-                    i === activeIndex ? "w-8 bg-primary" : "w-2 bg-gray-300"
-                  }`}
-                  aria-label={`Go to testimonial ${i + 1}`}
-                />
-              ))}
-            </div>
-          </div>
           <button
             type="button"
-            onClick={goNext}
-            className="p-2 rounded-full border border-gray-200 bg-white text-navy hover:bg-gray-50 transition-colors shrink-0"
+            onClick={() => swiperInstance?.slideNext()}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white border border-gray-200 shadow-md text-navy hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center translate-x-1/2 lg:translate-x-0 lg:right-4 cursor-pointer"
             aria-label="Next testimonial"
           >
-            <ChevronRight className="w-6 h-6" />
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
           </button>
+
+          <div className="testimonials-pagination flex justify-center gap-2 !relative !mt-8" />
         </div>
       </div>
+
+      <style jsx global>{`
+        .testimonials-section .testimonial-bullet {
+          width: 0.5rem;
+          height: 0.5rem;
+          background: #d1d5db;
+          opacity: 1;
+          border-radius: 9999px;
+          transition: width 0.3s ease, background 0.3s ease;
+          cursor: pointer;
+          margin: 0 0.25rem;
+          border: none;
+          padding: 0;
+        }
+        .testimonials-section .testimonial-bullet-active {
+          width: 2rem;
+          background: var(--primary, #3388ff);
+        }
+      `}</style>
     </section>
   );
 }

@@ -27,7 +27,7 @@ export default function LoginPage() {
       </h1>
       <p className="mt-2 text-muted-foreground">
         Don&apos;t have an account?{" "}
-        <Link href="/register" className="text-primary font-medium hover:underline">
+        <Link href="/register" className="text-navy font-medium hover:underline hover:text-navy/90">
           Create account
         </Link>
       </p>
@@ -52,7 +52,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="text-sm font-medium text-primary hover:underline"
+              className="text-sm font-medium text-navy hover:underline"
             >
               {showPassword ? "Hide" : "Show"}
             </button>
@@ -61,14 +61,14 @@ export default function LoginPage() {
         <div className="flex justify-end">
           <Link
             href="/forgot-password"
-            className="text-sm font-medium text-primary hover:underline"
+            className="text-sm font-medium text-navy hover:underline hover:text-navy/90"
           >
             Forgot password?
           </Link>
         </div>
         <button
           type="submit"
-          className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary text-white font-semibold py-3.5 hover:bg-primary/90 transition-colors"
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-navy text-white font-semibold py-3.5 hover:bg-navy/90 transition-colors"
         >
           Login
           <ArrowRight className="w-5 h-5" />

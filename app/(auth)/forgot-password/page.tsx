@@ -26,8 +26,8 @@ export default function ForgotPasswordPage() {
       </p>
 
       {submitted ? (
-        <div className="mt-8 p-6 rounded-2xl bg-primary/5 border border-primary/20">
-          <div className="flex items-center gap-3 text-primary">
+        <div className="mt-8 p-6 rounded-2xl bg-navy/5 border border-navy/20">
+          <div className="flex items-center gap-3 text-navy">
             <CheckCircle className="w-8 h-8 shrink-0" />
             <div>
               <p className="font-semibold text-navy">Check your email</p>
@@ -38,7 +38,7 @@ export default function ForgotPasswordPage() {
           </div>
           <Link
             href="/login"
-            className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+            className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-navy hover:underline hover:text-navy/90"
           >
             Back to login
             <ArrowRight className="w-4 h-4" />
@@ -56,13 +56,13 @@ export default function ForgotPasswordPage() {
           />
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary text-white font-semibold py-3.5 hover:bg-primary/90 transition-colors"
+            className="w-full flex items-center justify-center gap-2 rounded-xl bg-navy text-white font-semibold py-3.5 hover:bg-navy/90 transition-colors"
           >
             Send reset link
             <ArrowRight className="w-5 h-5" />
           </button>
           <p className="text-center">
-            <Link href="/login" className="text-sm font-medium text-primary hover:underline">
+            <Link href="/login" className="text-sm font-medium text-navy hover:underline hover:text-navy/90">
               Back to login
             </Link>
           </p>

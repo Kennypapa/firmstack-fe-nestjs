@@ -161,7 +161,7 @@ export default function DashboardPage() {
             <h2 className="text-lg font-semibold text-navy">Recent Invoices</h2>
             <a
               href="/dashboard/invoices"
-              className="text-sm font-medium text-primary hover:underline"
+              className="text-sm font-medium text-navy hover:underline"
             >
               View all
             </a>
@@ -206,7 +206,7 @@ export default function DashboardPage() {
             <h2 className="text-lg font-semibold text-navy">Recent Expenses</h2>
             <a
               href="/dashboard/expenses"
-              className="text-sm font-medium text-primary hover:underline"
+              className="text-sm font-medium text-navy hover:underline"
             >
               View all
             </a>

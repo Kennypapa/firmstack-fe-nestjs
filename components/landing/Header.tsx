@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X, Search } from "lucide-react";
+import { Menu, X } from "lucide-react";
 
 const navLinks = [
   { label: "Features", href: "#features" },
@@ -44,24 +44,11 @@ export function Header() {
           </nav>
 
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              className="p-2 text-navy hover:text-primary transition-colors"
-              aria-label="Search"
-            >
-              <Search className="w-5 h-5" />
-            </button>
             <Link
               href="/login"
-              className="hidden sm:inline-flex text-sm font-medium text-navy hover:text-primary transition-colors"
+              className="hidden sm:inline-flex items-center justify-center rounded-lg bg-navy text-white text-sm font-semibold px-5 py-2.5 hover:bg-navy/90 transition-colors"
             >
               Sign In
-            </Link>
-            <Link
-              href="/register"
-              className="inline-flex items-center justify-center rounded-lg bg-navy text-white text-sm font-semibold px-5 py-2.5 hover:bg-navy/90 transition-colors"
-            >
-              Start Free Trial
             </Link>
             <button
               type="button"
@@ -88,7 +75,7 @@ export function Header() {
             ))}
             <Link
               href="/login"
-              className="py-2 text-navy font-medium"
+              className="inline-flex items-center justify-center rounded-lg bg-navy text-white text-sm font-semibold px-5 py-2.5 hover:bg-navy/90 transition-colors mt-2 w-fit"
               onClick={() => setMobileOpen(false)}
             >
               Sign In

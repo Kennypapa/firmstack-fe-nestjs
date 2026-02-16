@@ -22,7 +22,7 @@ export const FormField = forwardRef<HTMLInputElement, FormFieldProps>(
           )}
           <input
             ref={ref}
-            className={`w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-navy placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-colors ${
+            className={`w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-navy placeholder:text-muted-foreground focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none transition-colors ${
               icon ? "pl-10" : ""
             } ${rightElement ? "pr-24" : ""} ${className}`}
             {...props}

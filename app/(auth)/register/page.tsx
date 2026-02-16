@@ -38,7 +38,7 @@ export default function RegisterPage() {
       </h1>
       <p className="mt-2 text-muted-foreground">
         Already have an account?{" "}
-        <Link href="/login" className="text-primary font-medium hover:underline">
+        <Link href="/login" className="text-navy font-medium hover:underline hover:text-navy/90">
           Login
         </Link>
       </p>
@@ -71,7 +71,7 @@ export default function RegisterPage() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="text-sm font-medium text-primary hover:underline"
+              className="text-sm font-medium text-navy hover:underline"
             >
               {showPassword ? "Hide" : "Show"}
             </button>
@@ -87,15 +87,15 @@ export default function RegisterPage() {
             type="checkbox"
             checked={agreedToTerms}
             onChange={(e) => setAgreedToTerms(e.target.checked)}
-            className="mt-1 rounded border-gray-300 text-primary focus:ring-primary"
+            className="mt-1 rounded border-gray-300 text-navy focus:ring-navy"
           />
           <span className="text-sm text-muted-foreground">
             I acknowledge that I have read and agree to the{" "}
-            <Link href="#" className="text-primary font-medium hover:underline">
+            <Link href="#" className="text-navy font-medium hover:underline hover:text-navy/90">
               Terms and Conditions
             </Link>{" "}
             and{" "}
-            <Link href="#" className="text-primary font-medium hover:underline">
+            <Link href="#" className="text-navy font-medium hover:underline hover:text-navy/90">
               Privacy Policy
             </Link>
             .
@@ -103,7 +103,7 @@ export default function RegisterPage() {
         </label>
         <button
           type="submit"
-          className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary text-white font-semibold py-3.5 hover:bg-primary/90 transition-colors"
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-navy text-white font-semibold py-3.5 hover:bg-navy/90 transition-colors"
         >
           Create account
           <ArrowRight className="w-5 h-5" />

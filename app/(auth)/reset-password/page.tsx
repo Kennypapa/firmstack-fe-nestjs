@@ -33,8 +33,8 @@ export default function ResetPasswordPage() {
     return (
       <AuthLayout tagline="Your password has been updated. You can now sign in with your new password.">
         <div className="text-center">
-          <div className="inline-flex p-4 rounded-full bg-primary/10">
-            <CheckCircle className="w-12 h-12 text-primary" />
+          <div className="inline-flex p-4 rounded-full bg-navy/10">
+            <CheckCircle className="w-12 h-12 text-navy" />
           </div>
           <h1 className="mt-6 text-2xl font-bold text-navy">Password reset</h1>
           <p className="mt-2 text-muted-foreground">
@@ -42,7 +42,7 @@ export default function ResetPasswordPage() {
           </p>
           <Link
             href="/login"
-            className="mt-8 inline-flex items-center justify-center gap-2 w-full rounded-xl bg-primary text-white font-semibold py-3.5 hover:bg-primary/90 transition-colors"
+            className="mt-8 inline-flex items-center justify-center gap-2 w-full rounded-xl bg-navy text-white font-semibold py-3.5 hover:bg-navy/90 transition-colors"
           >
             Go to login
             <ArrowRight className="w-5 h-5" />
@@ -73,7 +73,7 @@ export default function ResetPasswordPage() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="text-sm font-medium text-primary hover:underline"
+              className="text-sm font-medium text-navy hover:underline"
             >
               {showPassword ? "Hide" : "Show"}
             </button>
@@ -92,7 +92,7 @@ export default function ResetPasswordPage() {
             <button
               type="button"
               onClick={() => setShowConfirm(!showConfirm)}
-              className="text-sm font-medium text-primary hover:underline"
+              className="text-sm font-medium text-navy hover:underline"
             >
               {showConfirm ? "Hide" : "Show"}
             </button>
@@ -105,13 +105,13 @@ export default function ResetPasswordPage() {
         </ul>
         <button
           type="submit"
-          className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary text-white font-semibold py-3.5 hover:bg-primary/90 transition-colors"
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-navy text-white font-semibold py-3.5 hover:bg-navy/90 transition-colors"
         >
           Reset password
           <ArrowRight className="w-5 h-5" />
         </button>
         <p className="text-center">
-          <Link href="/login" className="text-sm font-medium text-primary hover:underline">
+          <Link href="/login" className="text-sm font-medium text-navy hover:underline hover:text-navy/90">
             Back to login
           </Link>
         </p>

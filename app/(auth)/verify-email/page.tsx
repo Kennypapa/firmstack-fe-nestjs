@@ -8,8 +8,8 @@ export default function VerifyEmailPage() {
   return (
     <AuthLayout tagline="Your email is verified. You’re all set to get started.">
       <div className="text-center">
-        <div className="inline-flex p-4 rounded-full bg-primary/10">
-          <Mail className="w-12 h-12 text-primary" />
+        <div className="inline-flex p-4 rounded-full bg-navy/10">
+          <Mail className="w-12 h-12 text-navy" />
         </div>
         <h1 className="mt-6 text-2xl sm:text-3xl font-bold text-navy">
           Verify your email
@@ -19,7 +19,7 @@ export default function VerifyEmailPage() {
         </p>
         <p className="mt-4 text-sm text-muted-foreground">
           Didn’t receive the email? Check your spam folder or{" "}
-          <button type="button" className="text-primary font-medium hover:underline">
+          <button type="button" className="text-navy font-medium hover:underline hover:text-navy/90">
             resend link
           </button>
           .
@@ -33,7 +33,7 @@ export default function VerifyEmailPage() {
         </Link>
         <p className="mt-6 text-sm text-muted-foreground">
           Already verified?{" "}
-          <Link href="/login" className="text-primary font-medium hover:underline">
+          <Link href="/login" className="text-navy font-medium hover:underline hover:text-navy/90">
             Sign in
           </Link>
         </p>
