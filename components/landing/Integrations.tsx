@@ -57,7 +57,7 @@ export function Integrations() {
               How Firmstack fits your stack
             </h2>
             <p className="mt-6 text-lg text-white/80 leading-relaxed max-w-lg">
-              More than a dashboard—Firmstack connects to the tools you use every day. Export, sync, and automate so your finances stay in sync with the rest of your business.
+              More than a dashboard—Firmstack connects to the tools you use every day. Whether you&apos;re solo or on a team, export, sync, and automate so your finances stay in sync.
             </p>
             <Link
               href="/pricing"

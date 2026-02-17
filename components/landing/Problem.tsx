@@ -31,7 +31,7 @@ export function Problem() {
           Sound familiar? Take back control
         </h2>
         <p className="mt-4 text-lg text-muted-foreground text-center max-w-xl mx-auto">
-          Growing businesses often hit the same walls. Firmstack fixes them.
+          Individuals and businesses often hit the same walls. Firmstack fixes them.
         </p>
         <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {pains.map((item) => (

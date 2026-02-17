@@ -11,6 +11,11 @@ import "swiper/css/pagination";
 const testimonials = [
   {
     quote:
+      "I needed one place for my invoices and expenses without the complexity of big software. Firmstack gives me a clear dashboard and reports—perfect for staying on top of my finances solo.",
+    attribution: "Freelance Consultant",
+  },
+  {
+    quote:
       "Firmstack has helped our team increase visibility into revenue and expenses. We finally have one place for invoices, expenses, and profit—and the role-based access keeps everything accountable.",
     attribution: "Finance Lead, Mid-size SaaS",
   },

@@ -1,36 +1,36 @@
 import {
-  TrendingUp,
+  FileText,
   CreditCard,
-  Shield,
-  ClipboardList,
-  Lock,
+  BarChart3,
+  LayoutDashboard,
+  Users,
 } from "lucide-react";
 
 const features = [
   {
-    icon: TrendingUp,
-    title: "Revenue tracking",
-    description: "See all income in one place with clear status and dates.",
+    icon: FileText,
+    title: "Create & send invoices",
+    description: "Professional invoices in minutes. Track status and get paid—solo or with your team.",
   },
   {
     icon: CreditCard,
-    title: "Expense monitoring",
-    description: "Categorize and track every outgoing payment.",
+    title: "Track expenses",
+    description: "Categorize and monitor every outgoing payment. Stay on top of cash flow.",
   },
   {
-    icon: Shield,
-    title: "Role-based access control",
-    description: "Owner, Admin, and Staff—each with the right permissions.",
+    icon: BarChart3,
+    title: "Generate reports",
+    description: "Clear reports and exports so you always know where your money stands.",
   },
   {
-    icon: ClipboardList,
-    title: "Activity logs",
-    description: "Full audit trail of who did what and when.",
+    icon: LayoutDashboard,
+    title: "Personal dashboard & analytics",
+    description: "One place for revenue, expenses, and profit. Your numbers, at a glance.",
   },
   {
-    icon: Lock,
-    title: "Secure tenant isolation",
-    description: "Your data stays in your company. Multi-tenant by design.",
+    icon: Users,
+    title: "Team management",
+    description: "For companies: invite your team, assign roles, and keep everyone accountable.",
   },
 ];
 
@@ -42,7 +42,7 @@ export function Features() {
           Everything you need to control finances
         </h2>
         <p className="mt-4 text-lg text-muted-foreground text-center max-w-2xl mx-auto">
-          Invoices, expenses, profit dashboard, and accountability—built for teams.
+          Whether you&apos;re solo or part of a team—invoices, expenses, reports, and a clear dashboard.
         </p>
         <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((item) => (

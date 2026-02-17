@@ -5,24 +5,24 @@ import { ArrowRight, Building2, UserPlus, LineChart } from "lucide-react";
 const steps = [
   {
     icon: Building2,
-    title: "Create your company",
-    description: "Sign up with your company name and email. You’re the owner from day one.",
-    cta: "Start free trial",
+    title: "Create your account",
+    description: "Sign up with email or Google. Choose a personal workspace or create a company—you’re in control from day one.",
+    cta: "Get started free",
     href: "/register",
     image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&q=80",
   },
   {
     icon: UserPlus,
-    title: "Invite your team",
-    description: "Add employees and assign roles—Admin or Staff—with the right permissions.",
-    cta: "See roles",
+    title: "Add finances (and optional team)",
+    description: "Add invoices and expenses in one place. Running a company? Invite your team and assign roles.",
+    cta: "See features",
     href: "#features",
     image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&q=80",
   },
   {
     icon: LineChart,
-    title: "Track & monitor finances",
-    description: "Add invoices and expenses, view the profit dashboard, and check activity logs.",
+    title: "Track & monitor",
+    description: "View your dashboard, reports, and activity—whether you're solo or with your team.",
     cta: "View dashboard",
     href: "#features",
     image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&q=80",
@@ -37,7 +37,7 @@ export function HowItWorks() {
           Get up and running in minutes
         </h2>
         <p className="mt-4 text-lg text-muted-foreground max-w-2xl">
-          Want to start today? Create your company, invite your team, and start tracking finances—no code, no hassle.
+          Whether you&apos;re solo or with a team—create your account, add your finances, and start tracking. No code, no hassle.
         </p>
         <div className="mt-12 grid md:grid-cols-3 gap-8">
           {steps.map((step, index) => (

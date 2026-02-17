@@ -25,7 +25,7 @@ export function Header() {
               src="/logo.png"
               alt="Firmstack"
               width={233}
-              height={0}
+              height={64}
               className="w-auto object-contain object-left"
               priority
             />
@@ -44,6 +44,12 @@ export function Header() {
           </nav>
 
           <div className="flex items-center gap-3">
+            <Link
+              href="/register"
+              className="hidden sm:inline-flex items-center justify-center rounded-lg border-2 border-navy/20 text-navy text-sm font-semibold px-5 py-2.5 hover:bg-navy/5 transition-colors"
+            >
+              Get Started Free
+            </Link>
             <Link
               href="/login"
               className="hidden sm:inline-flex items-center justify-center rounded-lg bg-navy text-white text-sm font-semibold px-5 py-2.5 hover:bg-navy/90 transition-colors"
@@ -74,8 +80,15 @@ export function Header() {
               </Link>
             ))}
             <Link
+              href="/register"
+              className="inline-flex items-center justify-center rounded-lg border-2 border-navy/20 text-navy text-sm font-semibold px-5 py-2.5 mt-2 w-fit hover:bg-navy/5"
+              onClick={() => setMobileOpen(false)}
+            >
+              Get Started Free
+            </Link>
+            <Link
               href="/login"
-              className="inline-flex items-center justify-center rounded-lg bg-navy text-white text-sm font-semibold px-5 py-2.5 hover:bg-navy/90 transition-colors mt-2 w-fit"
+              className="inline-flex items-center justify-center rounded-lg bg-navy text-white text-sm font-semibold px-5 py-2.5 mt-2 w-fit hover:bg-navy/90"
               onClick={() => setMobileOpen(false)}
             >
               Sign In

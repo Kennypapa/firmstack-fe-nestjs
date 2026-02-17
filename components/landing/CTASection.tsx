@@ -4,7 +4,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 
 const callouts = [
   "Clear profit visibility",
-  "Role-based control",
+  "Solo or team",
   "Full activity audit",
   "Secure & isolated",
 ];
@@ -18,7 +18,7 @@ export function CTASection() {
             <div className="relative w-80 h-80 mx-auto lg:mx-0 rounded-full overflow-hidden ring-4 ring-primary/10">
               <Image
                 src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&q=80"
-                alt="Team collaboration"
+                alt="Financial control"
                 width={400}
                 height={400}
                 className="w-full h-full object-cover"
@@ -44,18 +44,27 @@ export function CTASection() {
           </div>
           <div>
             <h2 className="text-3xl sm:text-4xl font-bold text-navy">
-              Built for growing teams
+              For individuals and businesses
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Firmstack is a multi-tenant financial control platform. Create your company, invite your team, and get one place for revenue, expenses, and profit—with role-based access and activity logs so everyone stays accountable.
+              One place for invoices, expenses, and cash flow—whether you&apos;re solo or part of a team. Get started free and add your finances in minutes.
             </p>
-            <Link
-              href="/register"
-              className="mt-8 inline-flex items-center gap-2 rounded-xl bg-navy text-white font-semibold px-6 py-3.5 hover:bg-navy/90 transition-colors"
-            >
-              Create your account
-              <ArrowRight className="w-5 h-5" />
-            </Link>
+            <div className="mt-8 flex flex-wrap gap-4">
+              <Link
+                href="/register"
+                className="inline-flex items-center gap-2 rounded-xl bg-navy text-white font-semibold px-6 py-3.5 hover:bg-navy/90 transition-colors"
+              >
+                Get Started Free
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+              <Link
+                href="#features"
+                className="inline-flex items-center gap-2 rounded-xl border-2 border-navy/20 text-navy font-semibold px-6 py-3.5 hover:bg-navy/5 transition-colors"
+              >
+                Learn More
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+            </div>
           </div>
         </div>
       </div>

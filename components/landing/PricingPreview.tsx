@@ -8,7 +8,7 @@ const plans = [
     period: "forever",
     description: "Get started with core features",
     features: ["Up to 3 users", "Invoices & expenses", "Basic dashboard", "Activity log"],
-    cta: "Start free",
+    cta: "Get started free",
     href: "/register",
     primary: false,
   },
@@ -16,9 +16,9 @@ const plans = [
     name: "Pro",
     price: "Custom",
     period: "per month",
-    description: "For growing teams",
+    description: "For individuals and growing teams",
     features: ["Unlimited users", "Full RBAC", "Reports & export", "Priority support"],
-    cta: "Start free trial",
+    cta: "Get started free",
     href: "/register",
     primary: true,
   },
@@ -42,7 +42,7 @@ export function PricingPreview() {
           Simple, transparent pricing
         </h2>
         <p className="mt-4 text-lg text-muted-foreground text-center max-w-xl mx-auto">
-          Start free. Upgrade when you need more users and features.
+          For individuals and teams. Start free—upgrade when you need more users and features.
         </p>
         <div className="mt-12 grid md:grid-cols-3 gap-8">
           {plans.map((plan) => (
