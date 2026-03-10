@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
@@ -17,14 +18,16 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-const mainNav = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/invoices", label: "Invoices", icon: FileText },
-  { href: "/dashboard/expenses", label: "Expenses", icon: CreditCard },
-  { href: "/dashboard/employees", label: "Employees", icon: Users },
-  { href: "/dashboard/reports", label: "Reports", icon: BarChart3 },
-  { href: "/dashboard/activity", label: "Activity Logs", icon: ClipboardList },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
+const WORKSPACE_KEY = "firmstack_workspace";
+
+const mainNavItems = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, companyOnly: false },
+  { href: "/dashboard/invoices", label: "Invoices", icon: FileText, companyOnly: false },
+  { href: "/dashboard/expenses", label: "Expenses", icon: CreditCard, companyOnly: false },
+  { href: "/dashboard/employees", label: "Employees", icon: Users, companyOnly: true },
+  { href: "/dashboard/reports", label: "Reports", icon: BarChart3, companyOnly: false },
+  { href: "/dashboard/activity", label: "Activity Logs", icon: ClipboardList, companyOnly: false },
+  { href: "/dashboard/settings", label: "Settings", icon: Settings, companyOnly: false },
 ];
 
 interface DashboardSidebarProps {
@@ -34,6 +37,17 @@ interface DashboardSidebarProps {
 
 export function DashboardSidebar({ collapsed, onCollapsedChange }: DashboardSidebarProps) {
   const pathname = usePathname();
+  const [isCompanyUser, setIsCompanyUser] = useState(true);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const workspace = window.sessionStorage.getItem(WORKSPACE_KEY);
+    setIsCompanyUser(workspace !== "personal");
+  }, []);
+
+  const mainNav = mainNavItems.filter(
+    (item) => !item.companyOnly || isCompanyUser
+  );
 
   return (
     <aside

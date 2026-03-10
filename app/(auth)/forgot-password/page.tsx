@@ -12,7 +12,6 @@ export default function ForgotPasswordPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // API integration later
     setSubmitted(true);
   };
 
@@ -49,7 +48,7 @@ export default function ForgotPasswordPage() {
           <FormField
             label="Email address"
             type="email"
-            placeholder="Enter your business email"
+            placeholder="Enter your email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             icon={<Mail className="w-5 h-5" />}

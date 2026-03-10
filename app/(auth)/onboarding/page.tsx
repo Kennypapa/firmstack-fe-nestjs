@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { AuthLayout } from "@/components/auth/AuthLayout";
 import { FormField } from "@/components/auth/FormField";
 import {
   Building2,
@@ -16,6 +15,8 @@ import {
   User,
   Check,
 } from "lucide-react";
+
+const WORKSPACE_KEY = "firmstack_workspace";
 
 const steps = [
   { id: 1, title: "Company details", icon: Building2 },
@@ -38,9 +39,19 @@ export default function OnboardingPage() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>("free");
 
   const handleFinish = () => {
-    // API integration later
-    router.push("/"); // Dashboard when ready: /dashboard
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem(WORKSPACE_KEY, "company");
+    }
+    router.push("/dashboard");
   };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const workspace = window.sessionStorage.getItem(WORKSPACE_KEY);
+    if (workspace === "personal") {
+      router.replace("/dashboard");
+    }
+  }, [router]);
 
   return (
     <div className="min-h-screen flex font-onest bg-gray-50">

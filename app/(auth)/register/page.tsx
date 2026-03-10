@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { FormField } from "@/components/auth/FormField";
-import { Mail, Lock, ArrowRight, Building2 } from "lucide-react";
+import { Mail, Lock, ArrowRight, Building2, User, Briefcase } from "lucide-react";
+
+const WORKSPACE_KEY = "firmstack_workspace";
 
 const passwordRules = [
   "One upper case letter [A-Z]",
@@ -15,10 +17,13 @@ const passwordRules = [
   "Minimum 8 characters",
 ];
 
+type WorkspaceType = "personal" | "company";
+
 export default function RegisterPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [workspaceType, setWorkspaceType] = useState<WorkspaceType>("personal");
   const [form, setForm] = useState({
     companyName: "",
     email: "",
@@ -27,12 +32,23 @@ export default function RegisterPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // API integration later; for now redirect to onboarding
-    router.push("/onboarding");
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem(WORKSPACE_KEY, workspaceType);
+    }
+    if (workspaceType === "personal") {
+      router.push("/dashboard");
+    } else {
+      router.push("/onboarding");
+    }
   };
 
+  const tagline =
+    workspaceType === "company"
+      ? "Create your company, invite your team, and take control of your finances—in one place."
+      : "Track invoices, expenses, and cash flow in one place—built for individuals.";
+
   return (
-    <AuthLayout tagline="Create your company, invite your team, and take control of your finances—in one place.">
+    <AuthLayout tagline={tagline}>
       <h1 className="text-2xl sm:text-3xl font-bold text-navy">
         Create your account
       </h1>
@@ -44,18 +60,52 @@ export default function RegisterPage() {
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-        <FormField
-          label="Company name"
-          type="text"
-          placeholder="Enter your company name"
-          value={form.companyName}
-          onChange={(e) => setForm((p) => ({ ...p, companyName: e.target.value }))}
-          icon={<Building2 className="w-5 h-5" />}
-        />
+        <div>
+          <label className="block text-sm font-medium text-navy mb-2">
+            I want to use Firmstack as
+          </label>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setWorkspaceType("personal")}
+              className={`flex-1 flex items-center justify-center gap-2 rounded-xl border-2 py-3 font-medium transition-colors ${
+                workspaceType === "personal"
+                  ? "border-navy bg-navy/5 text-navy"
+                  : "border-gray-200 text-muted-foreground hover:border-gray-300"
+              }`}
+            >
+              <User className="w-5 h-5" />
+              Personal
+            </button>
+            <button
+              type="button"
+              onClick={() => setWorkspaceType("company")}
+              className={`flex-1 flex items-center justify-center gap-2 rounded-xl border-2 py-3 font-medium transition-colors ${
+                workspaceType === "company"
+                  ? "border-navy bg-navy/5 text-navy"
+                  : "border-gray-200 text-muted-foreground hover:border-gray-300"
+              }`}
+            >
+              <Briefcase className="w-5 h-5" />
+              Company
+            </button>
+          </div>
+        </div>
+
+        {workspaceType === "company" && (
+          <FormField
+            label="Company name"
+            type="text"
+            placeholder="Enter your company name"
+            value={form.companyName}
+            onChange={(e) => setForm((p) => ({ ...p, companyName: e.target.value }))}
+            icon={<Building2 className="w-5 h-5" />}
+          />
+        )}
         <FormField
           label="Email address"
           type="email"
-          placeholder="Enter business email address"
+          placeholder={workspaceType === "company" ? "Enter business email address" : "Enter your email address"}
           value={form.email}
           onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
           icon={<Mail className="w-5 h-5" />}

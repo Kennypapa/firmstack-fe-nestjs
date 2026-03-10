@@ -36,7 +36,7 @@ export default function LoginPage() {
         <FormField
           label="Email address"
           type="email"
-          placeholder="Enter business email address"
+          placeholder="Enter your email address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           icon={<Mail className="w-5 h-5" />}
