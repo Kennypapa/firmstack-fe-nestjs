@@ -2,179 +2,303 @@
 
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Building2, Mail, Calendar, Clock } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  Download,
+  Send,
+  Pencil,
+  Copy,
+  CheckCircle,
+  Circle,
+} from "lucide-react";
 
 type InvoiceStatus = "Paid" | "Pending" | "Overdue" | "Draft";
+
 interface MockInvoice {
   id: string;
   status: InvoiceStatus;
-  client: { name: string; email: string };
+  client: { name: string; email: string; address: string };
+  from: { name: string; email: string };
   invoiceDate: string;
   dueDate: string;
   lineItems: { description: string; quantity: number; unitPrice: number; total: number }[];
   subtotal: number;
   tax: number;
+  taxPercent: number;
   discount: number;
   grandTotal: number;
-  activity: { user: string; action: string; time: string }[];
+  notes: string;
+  activity: { action: string; time: string; done: boolean }[];
 }
-// Mock – replace with API fetch by id
+
 const mockInvoice: MockInvoice = {
   id: "INV-028",
   status: "Pending",
-  client: { name: "Acme Corp", email: "billing@acme.com" },
-  invoiceDate: "2025-02-13",
-  dueDate: "2025-02-20",
+  client: { name: "Acme Corp", email: "billing@acme.com", address: "123 Business St, NY 10001" },
+  from: { name: "Firmstack", email: "invoices@firmstack.com" },
+  invoiceDate: "2026-03-01",
+  dueDate: "2026-03-20",
   lineItems: [
-    { description: "Consulting services", quantity: 10, unitPrice: 200, total: 2000 },
-    { description: "Software license", quantity: 1, unitPrice: 2200, total: 2200 },
+    { description: "Consulting services (10 hrs)", quantity: 10, unitPrice: 200, total: 2000 },
+    { description: "Software license - Annual", quantity: 1, unitPrice: 2200, total: 2200 },
   ],
   subtotal: 4200,
   tax: 0,
+  taxPercent: 0,
   discount: 0,
   grandTotal: 4200,
+  notes: "Payment is due within 20 days. Thank you for your business.",
   activity: [
-    { user: "You", action: "Invoice created", time: "Feb 13, 2025 10:00" },
-    { user: "You", action: "Invoice sent to client", time: "Feb 13, 2025 10:05" },
+    { action: "Invoice created", time: "Mar 1, 2026 10:00 AM", done: true },
+    { action: "Invoice sent to client", time: "Mar 1, 2026 10:05 AM", done: true },
+    { action: "Client viewed invoice", time: "Mar 2, 2026 2:30 PM", done: true },
+    { action: "Payment received", time: "Awaiting", done: false },
   ],
 };
 
-const statusConfig = {
-  Paid: "bg-emerald-500/10 text-emerald-700",
-  Pending: "bg-amber-500/10 text-amber-700",
-  Overdue: "bg-red-500/10 text-red-700",
-  Draft: "bg-gray-500/10 text-gray-600",
+const statusConfig: Record<InvoiceStatus, { label: string; dot: string; bg: string }> = {
+  Paid: { label: "Paid", dot: "bg-emerald-500", bg: "bg-emerald-50 text-emerald-700" },
+  Pending: { label: "Pending", dot: "bg-amber-500", bg: "bg-amber-50 text-amber-700" },
+  Overdue: { label: "Overdue", dot: "bg-red-500", bg: "bg-red-50 text-red-700" },
+  Draft: { label: "Draft", dot: "bg-gray-400", bg: "bg-gray-100 text-gray-600" },
 };
 
 export default function InvoiceDetailPage() {
   const params = useParams();
   const id = params.id as string;
-  const inv = mockInvoice; // In real app: fetch by id
+  const inv = mockInvoice;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       <Link
         href="/dashboard/invoices"
-        className="inline-flex items-center gap-2 text-sm font-medium text-navy hover:text-navy/80"
+        className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-navy transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Invoices
       </Link>
 
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-navy">{inv.id}</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-navy tracking-tight">{inv.id}</h1>
           <span
-            className={`inline-flex mt-2 px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig[inv.status]}`}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${statusConfig[inv.status].bg}`}
           >
-            {inv.status}
+            <span className={`w-1.5 h-1.5 rounded-full ${statusConfig[inv.status].dot}`} />
+            {statusConfig[inv.status].label}
           </span>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-sm font-medium text-navy hover:bg-gray-50 transition-colors"
+          >
+            <Copy className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Copy Link</span>
+          </button>
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-sm font-medium text-navy hover:bg-gray-50 transition-colors"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Download</span>
+          </button>
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-sm font-medium text-navy hover:bg-gray-50 transition-colors"
+          >
+            <Send className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Resend</span>
+          </button>
           <Link
             href={`/dashboard/invoices/${id}/edit`}
-            className="rounded-xl border-2 border-navy text-navy font-semibold px-4 py-2.5 hover:bg-navy/5"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-navy text-white text-sm font-semibold hover:bg-navy/90 transition-colors"
           >
+            <Pencil className="w-3.5 h-3.5" />
             Edit
           </Link>
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-navy mb-4">Client Information</h2>
-          <div className="flex items-start gap-3">
-            <div className="rounded-xl bg-navy/10 p-2.5">
-              <Building2 className="w-5 h-5 text-navy" />
-            </div>
-            <div>
-              <p className="font-medium text-navy">{inv.client.name}</p>
-              <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
-                <Mail className="w-4 h-4" />
-                {inv.client.email}
-              </p>
-            </div>
-          </div>
-          <div className="mt-4 flex gap-4 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <Calendar className="w-4 h-4" />
-              Invoice date: {inv.invoiceDate}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Clock className="w-4 h-4" />
-              Due date: {inv.dueDate}
-            </span>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-navy mb-4">Payment Status</h2>
-          <p className="text-muted-foreground">
-            {inv.status === "Paid"
-              ? "This invoice has been paid."
-              : inv.status === "Pending"
-              ? "Awaiting payment from client."
-              : inv.status === "Overdue"
-              ? "This invoice is past due."
-              : "Draft — not yet sent."}
-          </p>
-          <p className="mt-3 text-xl font-bold text-navy">
-            Grand Total: ${inv.grandTotal.toLocaleString()}
-          </p>
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
-        <h2 className="text-lg font-semibold text-navy px-6 py-4 border-b border-gray-100">
-          Line Items
-        </h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50/80 text-left">
-                <th className="px-6 py-3 font-medium text-navy">Description</th>
-                <th className="px-6 py-3 font-medium text-navy">Qty</th>
-                <th className="px-6 py-3 font-medium text-navy">Unit Price</th>
-                <th className="px-6 py-3 font-medium text-navy">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {inv.lineItems.map((line, i) => (
-                <tr key={i} className="border-t border-gray-100">
-                  <td className="px-6 py-3 text-navy">{line.description}</td>
-                  <td className="px-6 py-3 text-muted-foreground">{line.quantity}</td>
-                  <td className="px-6 py-3 text-muted-foreground">${line.unitPrice.toLocaleString()}</td>
-                  <td className="px-6 py-3 font-medium text-navy">${line.total.toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex justify-end gap-6 text-sm">
-          <span className="text-muted-foreground">Subtotal</span>
-          <span className="font-medium text-navy">${inv.subtotal.toLocaleString()}</span>
-        </div>
-        <div className="px-6 py-2 flex justify-end gap-6 text-sm">
-          <span className="text-muted-foreground">Grand Total</span>
-          <span className="font-bold text-navy">${inv.grandTotal.toLocaleString()}</span>
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-navy mb-4">Activity Timeline</h2>
-        <ul className="space-y-4">
-          {inv.activity.map((item, i) => (
-            <li key={i} className="flex gap-3">
-              <div className="w-2 h-2 rounded-full bg-navy mt-2 shrink-0" />
-              <div>
-                <p className="text-sm text-navy">
-                  <span className="font-medium">{item.user}</span> — {item.action}
-                </p>
-                <p className="text-xs text-muted-foreground">{item.time}</p>
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* ─── Invoice document ─── */}
+        <div className="lg:col-span-2">
+          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+            {/* Navy header */}
+            <div className="bg-navy px-6 sm:px-8 py-6 text-white">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <svg width="24" height="24" viewBox="0 0 32 32" fill="none" aria-hidden>
+                      <rect x="2" y="22" width="28" height="6" rx="1.5" fill="white" opacity="0.5" />
+                      <rect x="4" y="14" width="24" height="6" rx="1.5" fill="white" opacity="0.7" />
+                      <rect x="6" y="6" width="20" height="6" rx="1.5" fill="white" opacity="0.9" />
+                    </svg>
+                    <span className="font-bold">Firmstack</span>
+                  </div>
+                  <p className="text-white/60 text-xs">{inv.from.email}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold tracking-tight">INVOICE</p>
+                  <p className="text-white/60 text-sm mt-0.5">{inv.id}</p>
+                </div>
               </div>
-            </li>
-          ))}
-        </ul>
+            </div>
+
+            <div className="px-6 sm:px-8 py-6 space-y-6">
+              {/* Bill to + dates */}
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Bill to</p>
+                  <p className="text-base font-semibold text-navy mt-1">{inv.client.name}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{inv.client.email}</p>
+                  <p className="text-xs text-muted-foreground">{inv.client.address}</p>
+                </div>
+                <div className="sm:text-right space-y-2 text-sm">
+                  <div className="flex sm:justify-end items-center gap-2 text-muted-foreground">
+                    <Calendar className="w-3.5 h-3.5" />
+                    <span>Issued: <span className="text-navy font-medium">{inv.invoiceDate}</span></span>
+                  </div>
+                  <div className="flex sm:justify-end items-center gap-2 text-muted-foreground">
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>Due: <span className="text-navy font-medium">{inv.dueDate}</span></span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Line items */}
+              <div>
+                <div className="flex text-[10px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-gray-100 pb-2.5">
+                  <span className="flex-1">Description</span>
+                  <span className="w-16 text-center">Qty</span>
+                  <span className="w-24 text-right">Unit Price</span>
+                  <span className="w-24 text-right">Total</span>
+                </div>
+                <div className="divide-y divide-gray-50">
+                  {inv.lineItems.map((line, i) => (
+                    <div key={i} className="flex py-3 text-sm">
+                      <span className="flex-1 text-navy">{line.description}</span>
+                      <span className="w-16 text-center text-muted-foreground">{line.quantity}</span>
+                      <span className="w-24 text-right text-muted-foreground">${line.unitPrice.toLocaleString()}</span>
+                      <span className="w-24 text-right font-medium text-navy">${line.total.toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Totals */}
+              <div className="flex justify-end">
+                <div className="w-64 space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span className="text-navy font-medium">${inv.subtotal.toLocaleString()}</span>
+                  </div>
+                  {inv.taxPercent > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Tax ({inv.taxPercent}%)</span>
+                      <span className="text-navy font-medium">${inv.tax.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {inv.discount > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Discount</span>
+                      <span className="text-red-600 font-medium">-${inv.discount.toLocaleString()}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between border-t border-gray-200 pt-2">
+                    <span className="font-bold text-navy">Amount Due</span>
+                    <span className="font-bold text-navy text-lg">${inv.grandTotal.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Notes */}
+              {inv.notes && (
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Notes</p>
+                  <p className="text-sm text-navy/80 leading-relaxed">{inv.notes}</p>
+                </div>
+              )}
+
+              <div className="text-center border-t border-gray-100 pt-4">
+                <p className="text-xs text-muted-foreground">
+                  Generated by Firmstack &middot; Thank you for your business
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── Right sidebar ─── */}
+        <div className="space-y-5">
+          {/* Status timeline */}
+          <div className="rounded-2xl border border-gray-100 bg-white p-5">
+            <h3 className="text-sm font-semibold text-navy uppercase tracking-wider mb-4">
+              Timeline
+            </h3>
+            <div className="space-y-0">
+              {inv.activity.map((item, i) => (
+                <div key={i} className="flex gap-3">
+                  <div className="flex flex-col items-center">
+                    {item.done ? (
+                      <CheckCircle className="w-5 h-5 text-emerald-500 shrink-0" />
+                    ) : (
+                      <Circle className="w-5 h-5 text-gray-300 shrink-0" />
+                    )}
+                    {i < inv.activity.length - 1 && (
+                      <div className={`w-px h-8 ${item.done ? "bg-emerald-200" : "bg-gray-200"}`} />
+                    )}
+                  </div>
+                  <div className="pb-6">
+                    <p className={`text-sm font-medium ${item.done ? "text-navy" : "text-muted-foreground"}`}>
+                      {item.action}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{item.time}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Client */}
+          <div className="rounded-2xl border border-gray-100 bg-white p-5">
+            <h3 className="text-sm font-semibold text-navy uppercase tracking-wider mb-3">Client</h3>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-navy/[0.06] flex items-center justify-center shrink-0">
+                <span className="text-sm font-bold text-navy">{inv.client.name.charAt(0)}</span>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-navy">{inv.client.name}</p>
+                <p className="text-[11px] text-muted-foreground">{inv.client.email}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment */}
+          <div className="rounded-2xl border border-gray-100 bg-white p-5">
+            <h3 className="text-sm font-semibold text-navy uppercase tracking-wider mb-3">Payment</h3>
+            <div className="space-y-2.5 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Amount</span>
+                <span className="font-bold text-navy">${inv.grandTotal.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Status</span>
+                <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold ${statusConfig[inv.status].bg}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${statusConfig[inv.status].dot}`} />
+                  {statusConfig[inv.status].label}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Due date</span>
+                <span className="text-navy font-medium">{inv.dueDate}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

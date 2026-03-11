@@ -3,12 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AuthLayout } from "@/components/auth/AuthLayout";
-import { FormField } from "@/components/auth/FormField";
-import { Mail, ArrowRight, CheckCircle } from "lucide-react";
+import { ArrowRight, ArrowLeft, CheckCircle, Mail } from "lucide-react";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,56 +16,105 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <AuthLayout tagline="We’ll send you a secure link to reset your password. No stress.">
-      <h1 className="text-2xl sm:text-3xl font-bold text-navy">
-        Forgot password?
-      </h1>
-      <p className="mt-2 text-muted-foreground">
-        Enter your email and we’ll send you a link to reset your password.
-      </p>
-
+    <AuthLayout tagline="We'll send you a secure link to reset your password. No stress.">
       {submitted ? (
-        <div className="mt-8 p-6 rounded-2xl bg-navy/5 border border-navy/20">
-          <div className="flex items-center gap-3 text-navy">
-            <CheckCircle className="w-8 h-8 shrink-0" />
-            <div>
-              <p className="font-semibold text-navy">Check your email</p>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                We’ve sent a reset link to <strong>{email}</strong>. Click the link to set a new password.
-              </p>
-            </div>
+        <div className="text-center">
+          <div className="inline-flex p-5 rounded-2xl bg-primary/[0.06]">
+            <Mail className="w-10 h-10 text-primary" />
+          </div>
+          <h1 className="mt-6 text-2xl font-bold text-navy tracking-tight">
+            Check your email
+          </h1>
+          <p className="mt-3 text-muted-foreground text-[15px] leading-relaxed max-w-sm mx-auto">
+            We&apos;ve sent a password reset link to{" "}
+            <strong className="text-navy">{email}</strong>. Click the link to set
+            a new password.
+          </p>
+          <div className="mt-2 text-sm text-muted-foreground">
+            Didn&apos;t get it?{" "}
+            <button
+              type="button"
+              onClick={() => setSubmitted(false)}
+              className="font-medium text-primary hover:text-primary/80 transition-colors"
+            >
+              Try again
+            </button>
           </div>
           <Link
             href="/login"
-            className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-navy hover:underline hover:text-navy/90"
+            className="group mt-8 relative w-full flex items-center justify-center gap-2 h-14 rounded-2xl bg-navy text-white font-semibold text-[15px] overflow-hidden transition-all hover:shadow-lg hover:shadow-navy/20 active:scale-[0.98]"
           >
-            Back to login
-            <ArrowRight className="w-4 h-4" />
+            <span className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <span className="relative flex items-center gap-2">
+              Back to login
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </span>
           </Link>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-          <FormField
-            label="Email address"
-            type="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            icon={<Mail className="w-5 h-5" />}
-          />
-          <button
-            type="submit"
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-navy text-white font-semibold py-3.5 hover:bg-navy/90 transition-colors"
-          >
-            Send reset link
-            <ArrowRight className="w-5 h-5" />
-          </button>
-          <p className="text-center">
-            <Link href="/login" className="text-sm font-medium text-navy hover:underline hover:text-navy/90">
+        <>
+          <div className="mb-10">
+            <h1 className="text-2xl sm:text-3xl font-bold text-navy tracking-tight">
+              Forgot password?
+            </h1>
+            <p className="mt-2 text-muted-foreground text-[15px]">
+              No worries — enter your email and we&apos;ll send you a reset link.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+            {/* Email — floating label */}
+            <div className="relative">
+              <input
+                type="email"
+                id="forgot-email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onFocus={() => setFocusedField("email")}
+                onBlur={() => setFocusedField(null)}
+                className="peer w-full h-14 px-4 pt-5 pb-2 rounded-2xl border-2 border-gray-200 bg-white text-navy text-[15px] placeholder-transparent outline-none transition-all duration-200 focus:border-navy focus:shadow-[0_0_0_4px_rgba(34,46,77,0.08)] hover:border-gray-300"
+                placeholder="Email"
+                autoComplete="email"
+              />
+              <label
+                htmlFor="forgot-email"
+                className={`absolute left-4 transition-all duration-200 pointer-events-none ${
+                  email || focusedField === "email"
+                    ? "top-2 text-[11px] font-semibold tracking-wide uppercase"
+                    : "top-1/2 -translate-y-1/2 text-[15px]"
+                } ${focusedField === "email" ? "text-navy" : "text-muted-foreground"}`}
+              >
+                Email address
+              </label>
+              <div
+                className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-navy transition-all duration-300 ${
+                  focusedField === "email" ? "w-[calc(100%-2rem)]" : "w-0"
+                }`}
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="group relative w-full flex items-center justify-center gap-2 h-14 rounded-2xl bg-navy text-white font-semibold text-[15px] overflow-hidden transition-all hover:shadow-lg hover:shadow-navy/20 active:scale-[0.98]"
+            >
+              <span className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <span className="relative flex items-center gap-2">
+                Send reset link
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </span>
+            </button>
+          </form>
+
+          <p className="mt-8 text-center">
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-navy transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
               Back to login
             </Link>
           </p>
-        </form>
+        </>
       )}
     </AuthLayout>
   );

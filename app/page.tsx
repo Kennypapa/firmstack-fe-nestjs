@@ -5,6 +5,7 @@ import { Hero } from "@/components/landing/Hero";
 import { TrustedBy } from "@/components/landing/TrustedBy";
 import { Problem } from "@/components/landing/Problem";
 import { Features } from "@/components/landing/Features";
+import { MobilePreview } from "@/components/landing/MobilePreview";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { Integrations } from "@/components/landing/Integrations";
 import { TestimonialsCarousel } from "@/components/landing/TestimonialsCarousel";
@@ -29,6 +30,7 @@ export default function Home() {
         <TrustedBy />
         <Problem />
         <Features />
+        <MobilePreview />
         <HowItWorks />
         <Integrations />
         <TestimonialsCarousel />

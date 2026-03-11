@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Menu, X } from "lucide-react";
 
 const navLinks = [
@@ -13,22 +12,44 @@ const navLinks = [
   { label: "Resources", href: "#resources" },
 ];
 
+function FirmstackLogo() {
+  return (
+    <div className="flex items-center gap-2.5">
+      {/* Icon mark — layered blocks representing a "stack" */}
+      <svg
+        width="32"
+        height="32"
+        viewBox="0 0 32 32"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+      >
+        {/* Bottom layer */}
+        <rect x="2" y="22" width="28" height="6" rx="1.5" fill="#222e4d" />
+        {/* Middle layer */}
+        <rect x="4" y="14" width="24" height="6" rx="1.5" fill="#3388ff" />
+        {/* Top layer */}
+        <rect x="6" y="6" width="20" height="6" rx="1.5" fill="#7bbfff" />
+        {/* Accent bar on top layer */}
+        <rect x="10" y="8" width="12" height="2" rx="1" fill="white" opacity="0.6" />
+      </svg>
+      {/* Wordmark */}
+      <span className="text-xl font-bold tracking-tight text-navy">
+        Firm<span className="text-primary">stack</span>
+      </span>
+    </div>
+  );
+}
+
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100 font-onest">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 lg:h-18">
-          <Link href="/" className="flex items-center gap-2 shrink-0 h-[64px]">
-            <Image
-              src="/logo.png"
-              alt="Firmstack"
-              width={233}
-              height={64}
-              className="w-auto object-contain object-left"
-              priority
-            />
+        <div className="flex items-center justify-between h-16">
+          <Link href="/" className="flex items-center shrink-0">
+            <FirmstackLogo />
           </Link>
 
           <nav className="hidden lg:flex items-center gap-8">

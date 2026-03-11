@@ -10,20 +10,32 @@ export function DashboardLayoutClient({
   children: React.ReactNode;
 }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const sidebarWidth = sidebarCollapsed ? 72 : 256; // w-64 = 16rem = 256px
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="min-h-screen flex bg-white font-onest">
+    <div className="min-h-screen flex bg-[#f8f9fb] font-onest">
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
       <DashboardSidebar
         collapsed={sidebarCollapsed}
         onCollapsedChange={setSidebarCollapsed}
+        mobileOpen={mobileOpen}
+        onMobileClose={() => setMobileOpen(false)}
       />
+
       <div
-        className="flex-1 flex flex-col min-w-0 transition-[margin] duration-200"
-        style={{ marginLeft: sidebarWidth }}
+        className={`flex-1 flex flex-col min-w-0 transition-[margin] duration-200 ${
+          sidebarCollapsed ? "lg:ml-[72px]" : "lg:ml-64"
+        }`}
       >
-        <DashboardTopbar />
-        <main className="flex-1 p-6 overflow-auto">{children}</main>
+        <DashboardTopbar onMobileMenuClick={() => setMobileOpen(true)} />
+        <main className="flex-1 p-4 sm:p-6 overflow-auto">{children}</main>
       </div>
     </div>
   );
