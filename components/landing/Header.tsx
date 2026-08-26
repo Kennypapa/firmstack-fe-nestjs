@@ -12,11 +12,12 @@ const navLinks = [
   { label: "Resources", href: "#resources" },
 ];
 
+
 function FirmstackLogo() {
   return (
     <div className="flex items-center gap-2.5">
       {/* Icon mark — layered blocks representing a "stack" */}
-      <svg
+      <svg 
         width="32"
         height="32"
         viewBox="0 0 32 32"
@@ -40,6 +41,7 @@ function FirmstackLogo() {
     </div>
   );
 }
+
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -95,7 +97,7 @@ export function Header() {
                 key={link.href}
                 href={link.href}
                 className="py-2 text-navy font-medium hover:text-primary"
-                onClick={() => setMobileOpen(false)}
+                onClick={() => setMobileOpen(false)} 
               >
                 {link.label}
               </Link>

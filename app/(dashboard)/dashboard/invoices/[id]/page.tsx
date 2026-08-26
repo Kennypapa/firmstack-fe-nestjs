@@ -1,62 +1,25 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
-  Calendar,
-  Clock,
-  Download,
   Send,
   Pencil,
   Copy,
   CheckCircle,
   Circle,
+  LayoutTemplate,
 } from "lucide-react";
-
-type InvoiceStatus = "Paid" | "Pending" | "Overdue" | "Draft";
-
-interface MockInvoice {
-  id: string;
-  status: InvoiceStatus;
-  client: { name: string; email: string; address: string };
-  from: { name: string; email: string };
-  invoiceDate: string;
-  dueDate: string;
-  lineItems: { description: string; quantity: number; unitPrice: number; total: number }[];
-  subtotal: number;
-  tax: number;
-  taxPercent: number;
-  discount: number;
-  grandTotal: number;
-  notes: string;
-  activity: { action: string; time: string; done: boolean }[];
-}
-
-const mockInvoice: MockInvoice = {
-  id: "INV-028",
-  status: "Pending",
-  client: { name: "Acme Corp", email: "billing@acme.com", address: "123 Business St, NY 10001" },
-  from: { name: "Firmstack", email: "invoices@firmstack.com" },
-  invoiceDate: "2026-03-01",
-  dueDate: "2026-03-20",
-  lineItems: [
-    { description: "Consulting services (10 hrs)", quantity: 10, unitPrice: 200, total: 2000 },
-    { description: "Software license - Annual", quantity: 1, unitPrice: 2200, total: 2200 },
-  ],
-  subtotal: 4200,
-  tax: 0,
-  taxPercent: 0,
-  discount: 0,
-  grandTotal: 4200,
-  notes: "Payment is due within 20 days. Thank you for your business.",
-  activity: [
-    { action: "Invoice created", time: "Mar 1, 2026 10:00 AM", done: true },
-    { action: "Invoice sent to client", time: "Mar 1, 2026 10:05 AM", done: true },
-    { action: "Client viewed invoice", time: "Mar 2, 2026 2:30 PM", done: true },
-    { action: "Payment received", time: "Awaiting", done: false },
-  ],
-};
+import { InvoiceDocument } from "@/components/invoices/InvoiceDocument";
+import { InvoiceDownloadMenu } from "@/components/invoices/InvoiceDownloadMenu";
+import { loadCompanyLogo, loadCompanyProfile } from "@/lib/company-branding";
+import { getInvoiceTemplateMeta } from "@/lib/mock-invoice-details";
+import type { InvoiceStatus } from "@/lib/mock-invoice-details";
+import { loadTemplatePreference } from "@/lib/invoice-templates";
+import { getInvoice, getPublicLink, resendInvoice } from "@/lib/api/invoices";
+import { formatInvoiceStatus, formatRelativeTime } from "@/lib/format";
 
 const statusConfig: Record<InvoiceStatus, { label: string; dot: string; bg: string }> = {
   Paid: { label: "Paid", dot: "bg-emerald-500", bg: "bg-emerald-50 text-emerald-700" },
@@ -68,10 +31,160 @@ const statusConfig: Record<InvoiceStatus, { label: string; dot: string; bg: stri
 export default function InvoiceDetailPage() {
   const params = useParams();
   const id = params.id as string;
-  const inv = mockInvoice;
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [inv, setInv] = useState<{
+    id: string;
+    number: string;
+    status: InvoiceStatus;
+    client: { name: string; email: string; address?: string | null };
+    from: { name: string; email: string };
+    invoiceDate: string;
+    dueDate: string;
+    lineItems: {
+      id: string;
+      description: string;
+      quantity: number;
+      unitPrice: number;
+    }[];
+    subtotal: number;
+    taxPercent: number;
+    tax: number;
+    discountAmount: number;
+    grandTotal: number;
+    notes?: string | null;
+    activity: { action: string; time: string; done: boolean }[];
+  } | null>(null);
+
+  const [companyName, setCompanyName] = useState("Firmstack");
+  const [companyEmail, setCompanyEmail] = useState("invoices@firmstack.com");
+  const [companyLogo, setCompanyLogo] = useState<string | null>(null);
+  const [templateId, setTemplateId] = useState("modern-blue");
+
+  useEffect(() => {
+    const profile = loadCompanyProfile();
+    setCompanyName(profile.name);
+    setCompanyEmail(profile.email);
+    setCompanyLogo(loadCompanyLogo());
+    setTemplateId(loadTemplatePreference().templateId);
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    getInvoice(id)
+      .then((data) => {
+        setInv({
+          id: data.id,
+          number: data.number,
+          status: formatInvoiceStatus(data.status) as InvoiceStatus,
+          client: data.client,
+          from: (data as { from?: { name: string; email: string } }).from ?? {
+            name: companyName,
+            email: companyEmail,
+          },
+          invoiceDate: data.invoiceDate.slice(0, 10),
+          dueDate: data.dueDate.slice(0, 10),
+          lineItems: (data.lineItems as {
+            id: string;
+            description: string;
+            quantity: number;
+            unitPrice: number;
+          }[]) ?? [],
+          subtotal: (data as { subtotal?: number }).subtotal ?? data.grandTotal,
+          taxPercent: (data as { taxPercent?: number }).taxPercent ?? 0,
+          tax: (data as { tax?: number }).tax ?? 0,
+          discountAmount: (data as { discount?: number }).discount ?? 0,
+          grandTotal: data.grandTotal,
+          notes: (data as { notes?: string }).notes,
+          activity: (
+            (data.activity as { action: string; time: string; done: boolean }[]) ??
+            []
+          ).map((item) => ({
+            ...item,
+            time: formatRelativeTime(item.time),
+          })),
+        });
+      })
+      .catch(() => setError("Invoice not found"))
+      .finally(() => setLoading(false));
+  }, [id, companyName, companyEmail]);
+
+  if (loading) {
+    return (
+      <div className="p-12 text-center text-muted-foreground text-sm">
+        Loading invoice…
+      </div>
+    );
+  }
+
+  if (error || !inv) {
+    return (
+      <div className="space-y-4">
+        <Link
+          href="/dashboard/invoices"
+          className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-navy"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Invoices
+        </Link>
+        <p className="text-red-600">{error ?? "Invoice not found"}</p>
+      </div>
+    );
+  }
+
+  const template = getInvoiceTemplateMeta({
+    id: inv.number,
+    status: inv.status,
+    templateId,
+    client: {
+      name: inv.client.name,
+      email: inv.client.email,
+      address: inv.client.address ?? "",
+    },
+    invoiceDate: inv.invoiceDate,
+    dueDate: inv.dueDate,
+    lineItems: inv.lineItems,
+    subtotal: inv.subtotal,
+    tax: inv.tax,
+    taxPercent: inv.taxPercent,
+    discountAmount: inv.discountAmount,
+    grandTotal: inv.grandTotal,
+    notes: inv.notes ?? "",
+    activity: inv.activity,
+  });
+
+  const formatAmount = (val: number) =>
+    `$${val.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+
+  const documentData = useMemo(
+    () => ({
+      companyName,
+      companyEmail,
+      companyLogo,
+      clientName: inv.client.name,
+      clientEmail: inv.client.email,
+      clientAddress: inv.client.address ?? undefined,
+      invoiceDate: inv.invoiceDate,
+      dueDate: inv.dueDate,
+      invoiceNumber: inv.number,
+      lineItems: inv.lineItems,
+      subtotal: inv.subtotal,
+      taxPercent: inv.taxPercent,
+      tax: inv.tax,
+      discountAmount: inv.discountAmount,
+      grandTotal: inv.grandTotal,
+      notes: inv.notes ?? "",
+      formatAmount,
+    }),
+    [companyName, companyEmail, companyLogo, inv]
+  );
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="w-full space-y-6">
       <Link
         href="/dashboard/invoices"
         className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-navy transition-colors"
@@ -82,32 +195,35 @@ export default function InvoiceDetailPage() {
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-navy tracking-tight">{inv.id}</h1>
+        <div className="flex items-center gap-3 flex-wrap">
+          <h1 className="text-2xl font-bold text-navy tracking-tight">{inv.number}</h1>
           <span
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${statusConfig[inv.status].bg}`}
           >
             <span className={`w-1.5 h-1.5 rounded-full ${statusConfig[inv.status].dot}`} />
             {statusConfig[inv.status].label}
           </span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-gray-100 text-navy">
+            <LayoutTemplate className="w-3 h-3" />
+            {template.name}
+          </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             type="button"
+            onClick={async () => {
+              const link = await getPublicLink(id);
+              await navigator.clipboard.writeText(link.url);
+            }}
             className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-sm font-medium text-navy hover:bg-gray-50 transition-colors"
           >
             <Copy className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Copy Link</span>
           </button>
+          <InvoiceDownloadMenu data={documentData} />
           <button
             type="button"
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-sm font-medium text-navy hover:bg-gray-50 transition-colors"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Download</span>
-          </button>
-          <button
-            type="button"
+            onClick={() => resendInvoice(id)}
             className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-sm font-medium text-navy hover:bg-gray-50 transition-colors"
           >
             <Send className="w-3.5 h-3.5" />
@@ -123,117 +239,17 @@ export default function InvoiceDetailPage() {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* ─── Invoice document ─── */}
-        <div className="lg:col-span-2">
-          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-            {/* Navy header */}
-            <div className="bg-navy px-6 sm:px-8 py-6 text-white">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <svg width="24" height="24" viewBox="0 0 32 32" fill="none" aria-hidden>
-                      <rect x="2" y="22" width="28" height="6" rx="1.5" fill="white" opacity="0.5" />
-                      <rect x="4" y="14" width="24" height="6" rx="1.5" fill="white" opacity="0.7" />
-                      <rect x="6" y="6" width="20" height="6" rx="1.5" fill="white" opacity="0.9" />
-                    </svg>
-                    <span className="font-bold">Firmstack</span>
-                  </div>
-                  <p className="text-white/60 text-xs">{inv.from.email}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold tracking-tight">INVOICE</p>
-                  <p className="text-white/60 text-sm mt-0.5">{inv.id}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="px-6 sm:px-8 py-6 space-y-6">
-              {/* Bill to + dates */}
-              <div className="flex flex-col sm:flex-row sm:justify-between gap-4">
-                <div>
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Bill to</p>
-                  <p className="text-base font-semibold text-navy mt-1">{inv.client.name}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{inv.client.email}</p>
-                  <p className="text-xs text-muted-foreground">{inv.client.address}</p>
-                </div>
-                <div className="sm:text-right space-y-2 text-sm">
-                  <div className="flex sm:justify-end items-center gap-2 text-muted-foreground">
-                    <Calendar className="w-3.5 h-3.5" />
-                    <span>Issued: <span className="text-navy font-medium">{inv.invoiceDate}</span></span>
-                  </div>
-                  <div className="flex sm:justify-end items-center gap-2 text-muted-foreground">
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>Due: <span className="text-navy font-medium">{inv.dueDate}</span></span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Line items */}
-              <div>
-                <div className="flex text-[10px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-gray-100 pb-2.5">
-                  <span className="flex-1">Description</span>
-                  <span className="w-16 text-center">Qty</span>
-                  <span className="w-24 text-right">Unit Price</span>
-                  <span className="w-24 text-right">Total</span>
-                </div>
-                <div className="divide-y divide-gray-50">
-                  {inv.lineItems.map((line, i) => (
-                    <div key={i} className="flex py-3 text-sm">
-                      <span className="flex-1 text-navy">{line.description}</span>
-                      <span className="w-16 text-center text-muted-foreground">{line.quantity}</span>
-                      <span className="w-24 text-right text-muted-foreground">${line.unitPrice.toLocaleString()}</span>
-                      <span className="w-24 text-right font-medium text-navy">${line.total.toLocaleString()}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Totals */}
-              <div className="flex justify-end">
-                <div className="w-64 space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Subtotal</span>
-                    <span className="text-navy font-medium">${inv.subtotal.toLocaleString()}</span>
-                  </div>
-                  {inv.taxPercent > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Tax ({inv.taxPercent}%)</span>
-                      <span className="text-navy font-medium">${inv.tax.toLocaleString()}</span>
-                    </div>
-                  )}
-                  {inv.discount > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Discount</span>
-                      <span className="text-red-600 font-medium">-${inv.discount.toLocaleString()}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between border-t border-gray-200 pt-2">
-                    <span className="font-bold text-navy">Amount Due</span>
-                    <span className="font-bold text-navy text-lg">${inv.grandTotal.toLocaleString()}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Notes */}
-              {inv.notes && (
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Notes</p>
-                  <p className="text-sm text-navy/80 leading-relaxed">{inv.notes}</p>
-                </div>
-              )}
-
-              <div className="text-center border-t border-gray-100 pt-4">
-                <p className="text-xs text-muted-foreground">
-                  Generated by Firmstack &middot; Thank you for your business
-                </p>
-              </div>
-            </div>
+      <div className="flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-10">
+        {/* Invoice — full template width, sharp paper edges (no size cap) */}
+        <div className="w-full lg:w-[62%] lg:min-w-0 shrink-0">
+          <div className="bg-white border border-gray-300 shadow-[0_12px_40px_rgba(34,46,77,0.12)] ring-1 ring-black/[0.04]">
+            <InvoiceDocument templateId={templateId} data={documentData} />
           </div>
         </div>
 
-        {/* ─── Right sidebar ─── */}
-        <div className="space-y-5">
+        {/* Sidebar — centered in the remaining space */}
+        <div className="w-full lg:flex-1 flex justify-center min-w-0">
+          <div className="w-full max-w-[340px] space-y-5">
           {/* Status timeline */}
           <div className="rounded-2xl border border-gray-100 bg-white p-5">
             <h3 className="text-sm font-semibold text-navy uppercase tracking-wider mb-4">
@@ -249,11 +265,15 @@ export default function InvoiceDetailPage() {
                       <Circle className="w-5 h-5 text-gray-300 shrink-0" />
                     )}
                     {i < inv.activity.length - 1 && (
-                      <div className={`w-px h-8 ${item.done ? "bg-emerald-200" : "bg-gray-200"}`} />
+                      <div
+                        className={`w-px h-8 ${item.done ? "bg-emerald-200" : "bg-gray-200"}`}
+                      />
                     )}
                   </div>
                   <div className="pb-6">
-                    <p className={`text-sm font-medium ${item.done ? "text-navy" : "text-muted-foreground"}`}>
+                    <p
+                      className={`text-sm font-medium ${item.done ? "text-navy" : "text-muted-foreground"}`}
+                    >
                       {item.action}
                     </p>
                     <p className="text-[11px] text-muted-foreground mt-0.5">{item.time}</p>
@@ -265,10 +285,14 @@ export default function InvoiceDetailPage() {
 
           {/* Client */}
           <div className="rounded-2xl border border-gray-100 bg-white p-5">
-            <h3 className="text-sm font-semibold text-navy uppercase tracking-wider mb-3">Client</h3>
+            <h3 className="text-sm font-semibold text-navy uppercase tracking-wider mb-3">
+              Client
+            </h3>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-navy/[0.06] flex items-center justify-center shrink-0">
-                <span className="text-sm font-bold text-navy">{inv.client.name.charAt(0)}</span>
+                <span className="text-sm font-bold text-navy">
+                  {inv.client.name.charAt(0)}
+                </span>
               </div>
               <div>
                 <p className="text-sm font-semibold text-navy">{inv.client.name}</p>
@@ -279,16 +303,24 @@ export default function InvoiceDetailPage() {
 
           {/* Payment */}
           <div className="rounded-2xl border border-gray-100 bg-white p-5">
-            <h3 className="text-sm font-semibold text-navy uppercase tracking-wider mb-3">Payment</h3>
+            <h3 className="text-sm font-semibold text-navy uppercase tracking-wider mb-3">
+              Payment
+            </h3>
             <div className="space-y-2.5 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Amount</span>
-                <span className="font-bold text-navy">${inv.grandTotal.toLocaleString()}</span>
+                <span className="font-bold text-navy">
+                  {formatAmount(inv.grandTotal)}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Status</span>
-                <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold ${statusConfig[inv.status].bg}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${statusConfig[inv.status].dot}`} />
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold ${statusConfig[inv.status].bg}`}
+                >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${statusConfig[inv.status].dot}`}
+                  />
                   {statusConfig[inv.status].label}
                 </span>
               </div>
@@ -297,6 +329,7 @@ export default function InvoiceDetailPage() {
                 <span className="text-navy font-medium">{inv.dueDate}</span>
               </div>
             </div>
+          </div>
           </div>
         </div>
       </div>

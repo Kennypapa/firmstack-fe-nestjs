@@ -1,16 +1,28 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Download } from "lucide-react";
+import { listPayslips } from "@/lib/api/portal";
 
-const mockPayslips = [
-  { month: "January", year: 2026 },
-  { month: "December", year: 2025 },
-  { month: "November", year: 2025 },
-  { month: "October", year: 2025 },
-];
+type Payslip = {
+  id: string;
+  month: string;
+  year: number;
+  downloadUrl: string | null;
+};
 
 export default function PortalPayslipsPage() {
+  const [payslips, setPayslips] = useState<Payslip[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    listPayslips()
+      .then(setPayslips)
+      .catch(() => setPayslips([]))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <div className="max-w-xl mx-auto px-4 sm:px-6 py-10">
       <Link
@@ -24,25 +36,43 @@ export default function PortalPayslipsPage() {
       <h1 className="text-2xl font-bold text-navy mb-8">Payslips</h1>
 
       <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
-        <ul className="divide-y divide-gray-100">
-          {mockPayslips.map((item) => (
-            <li
-              key={`${item.month}-${item.year}`}
-              className="flex items-center justify-between px-6 py-4"
-            >
-              <span className="font-medium text-navy">
-                {item.month} {item.year}
-              </span>
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 rounded-xl border border-navy text-navy font-medium px-4 py-2 text-sm hover:bg-navy/5 transition-colors"
+        {loading ? (
+          <p className="px-6 py-8 text-center text-muted-foreground text-sm">
+            Loading payslips…
+          </p>
+        ) : payslips.length === 0 ? (
+          <p className="px-6 py-8 text-center text-muted-foreground text-sm">
+            No payslips available yet.
+          </p>
+        ) : (
+          <ul className="divide-y divide-gray-100">
+            {payslips.map((item) => (
+              <li
+                key={item.id}
+                className="flex items-center justify-between px-6 py-4"
               >
-                <Download className="w-4 h-4" />
-                Download
-              </button>
-            </li>
-          ))}
-        </ul>
+                <span className="font-medium text-navy">
+                  {item.month} {item.year}
+                </span>
+                {item.downloadUrl ? (
+                  <a
+                    href={item.downloadUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-xl border border-navy text-navy font-medium px-4 py-2 text-sm hover:bg-navy/5 transition-colors"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download
+                  </a>
+                ) : (
+                  <span className="text-xs text-muted-foreground">
+                    Not available
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

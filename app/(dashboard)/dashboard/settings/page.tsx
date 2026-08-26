@@ -1,23 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Building2,
   Globe,
   Bell,
   Shield,
   CreditCard,
-  Moon,
-  Sun,
   Check,
   ChevronRight,
-  Mail,
-  Lock,
   Eye,
   EyeOff,
+  Upload,
+  Trash2,
 } from "lucide-react";
+import {
+  loadCompanyLogo,
+  loadCompanyProfile,
+  saveCompanyLogo,
+  saveCompanyProfile,
+} from "@/lib/company-branding";
+import {
+  getBilling,
+  getNotifications,
+  getSettings,
+  updateNotifications,
+  updateSettings,
+} from "@/lib/api/workspaces";
 
-/* ─── Types ─── */
 type Tab = "general" | "notifications" | "security" | "billing";
 
 const tabs: { id: Tab; label: string; icon: typeof Building2 }[] = [
@@ -27,7 +37,6 @@ const tabs: { id: Tab; label: string; icon: typeof Building2 }[] = [
   { id: "billing", label: "Billing", icon: CreditCard },
 ];
 
-/* ─── Toggle component ─── */
 function Toggle({ enabled, onChange }: { enabled: boolean; onChange: (v: boolean) => void }) {
   return (
     <button
@@ -48,38 +57,109 @@ function Toggle({ enabled, onChange }: { enabled: boolean; onChange: (v: boolean
   );
 }
 
-/* ─── Page ─── */
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>("general");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // General
   const [companyName, setCompanyName] = useState("My Company");
   const [companyEmail, setCompanyEmail] = useState("user@company.com");
+  const [companyLogo, setCompanyLogo] = useState<string | null>(null);
   const [currency, setCurrency] = useState("USD");
   const [timezone, setTimezone] = useState("UTC");
   const [saved, setSaved] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
 
-  // Notifications
+  useEffect(() => {
+    getSettings()
+      .then((settings) => {
+        setCompanyName(settings.companyName);
+        setCompanyEmail(settings.companyEmail ?? "");
+        setCurrency(settings.currency);
+        setTimezone(settings.timezone);
+        saveCompanyProfile(settings.companyName, settings.companyEmail ?? "");
+      })
+      .catch(() => {
+        const profile = loadCompanyProfile();
+        setCompanyName(profile.name);
+        setCompanyEmail(profile.email);
+      });
+
+    getNotifications()
+      .then((prefs) => {
+        if (prefs.emailInvoice !== undefined) setEmailInvoice(prefs.emailInvoice);
+        if (prefs.emailExpense !== undefined) setEmailExpense(prefs.emailExpense);
+        if (prefs.emailTeam !== undefined) setEmailTeam(prefs.emailTeam);
+        if (prefs.emailWeekly !== undefined) setEmailWeekly(prefs.emailWeekly);
+      })
+      .catch(() => undefined);
+
+    setCompanyLogo(loadCompanyLogo());
+  }, []);
+
   const [emailInvoice, setEmailInvoice] = useState(true);
   const [emailExpense, setEmailExpense] = useState(true);
   const [emailTeam, setEmailTeam] = useState(false);
   const [emailWeekly, setEmailWeekly] = useState(true);
 
-  // Security
   const [showCurrentPw, setShowCurrentPw] = useState(false);
   const [showNewPw, setShowNewPw] = useState(false);
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
   const [twoFactor, setTwoFactor] = useState(false);
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleSave = async () => {
+    try {
+      await updateSettings({
+        companyName,
+        companyEmail,
+        currency,
+        timezone,
+      });
+      saveCompanyProfile(companyName, companyEmail);
+      saveCompanyLogo(companyLogo);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const handleSaveNotifications = async () => {
+    try {
+      await updateNotifications({
+        emailInvoice,
+        emailExpense,
+        emailTeam,
+        emailWeekly,
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const processLogoFile = (file: File) => {
+    setLogoError(null);
+    const allowed = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml"];
+    if (!allowed.includes(file.type)) {
+      setLogoError("Please upload a PNG, JPG, WEBP, or SVG file.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setLogoError("Logo must be under 2 MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCompanyLogo(typeof reader.result === "string" ? reader.result : null);
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
-    <div className="space-y-6 max-w-[900px]">
-      {/* Header */}
+    <div className="space-y-6 w-full">
       <div>
         <h1 className="text-2xl font-bold text-navy tracking-tight">Settings</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
@@ -88,12 +168,12 @@ export default function SettingsPage() {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-6">
-        {/* Sidebar tabs */}
         <nav className="sm:w-48 shrink-0">
           <div className="flex sm:flex-col gap-1 overflow-x-auto sm:overflow-visible pb-2 sm:pb-0">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
+                type="button"
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
                   activeTab === tab.id
@@ -108,15 +188,96 @@ export default function SettingsPage() {
           </div>
         </nav>
 
-        {/* Content */}
         <div className="flex-1 min-w-0">
-          {/* ─── General ─── */}
           {activeTab === "general" && (
             <div className="space-y-5">
               <div className="rounded-2xl border border-gray-100 bg-white p-5 space-y-5">
                 <h2 className="text-sm font-semibold text-navy uppercase tracking-wider">
                   Company Information
                 </h2>
+
+                <div>
+                  <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+                    Company Logo
+                  </label>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Shown on your invoices. PNG, JPG, WEBP, or SVG — max 2 MB.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-4 items-start">
+                    <div className="w-24 h-24 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
+                      {companyLogo ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={companyLogo}
+                          alt="Company logo"
+                          className="max-w-full max-h-full object-contain p-2"
+                        />
+                      ) : (
+                        <Building2 className="w-8 h-8 text-muted-foreground/40" />
+                      )}
+                    </div>
+                    <div className="flex-1 w-full min-w-0 space-y-2">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) processLogoFile(file);
+                          e.target.value = "";
+                        }}
+                      />
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click();
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setDragOver(true);
+                        }}
+                        onDragLeave={() => setDragOver(false)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setDragOver(false);
+                          const file = e.dataTransfer.files?.[0];
+                          if (file) processLogoFile(file);
+                        }}
+                        onClick={() => fileInputRef.current?.click()}
+                        className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors ${
+                          dragOver
+                            ? "border-navy bg-navy/5"
+                            : "border-gray-200 hover:border-gray-300 hover:bg-gray-50/50"
+                        }`}
+                      >
+                        <Upload className="w-5 h-5 mx-auto mb-1.5 text-muted-foreground" />
+                        <p className="text-sm text-navy font-medium">
+                          Drag and drop or click to upload
+                        </p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          Recommended: square logo, at least 200×200px
+                        </p>
+                      </div>
+                      {companyLogo && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCompanyLogo(null);
+                            setLogoError(null);
+                          }}
+                          className="inline-flex items-center gap-1.5 text-xs font-medium text-red-600 hover:text-red-700 transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Remove logo
+                        </button>
+                      )}
+                      {logoError && <p className="text-xs text-red-600">{logoError}</p>}
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
@@ -202,7 +363,6 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* ─── Notifications ─── */}
           {activeTab === "notifications" && (
             <div className="space-y-5">
               <div className="rounded-2xl border border-gray-100 bg-white p-5">
@@ -247,11 +407,17 @@ export default function SettingsPage() {
                     <Toggle enabled={emailWeekly} onChange={setEmailWeekly} />
                   </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={handleSaveNotifications}
+                  className="mt-5 rounded-xl bg-navy text-white font-semibold px-5 py-2.5 text-sm hover:bg-navy/90 transition-colors"
+                >
+                  Save preferences
+                </button>
               </div>
             </div>
           )}
 
-          {/* ─── Security ─── */}
           {activeTab === "security" && (
             <div className="space-y-5">
               <div className="rounded-2xl border border-gray-100 bg-white p-5 space-y-5">
@@ -327,30 +493,28 @@ export default function SettingsPage() {
                 <h2 className="text-sm font-semibold text-navy uppercase tracking-wider mb-3">
                   Sessions
                 </h2>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between py-2">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
-                        <Globe className="w-4 h-4 text-emerald-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-navy">Current session</p>
-                        <p className="text-[11px] text-muted-foreground">Chrome on macOS &middot; Active now</p>
-                      </div>
+                <div className="flex items-center justify-between py-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                      <Globe className="w-4 h-4 text-emerald-600" />
                     </div>
-                    <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">
-                      Current
-                    </span>
+                    <div>
+                      <p className="text-sm font-medium text-navy">Current session</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Chrome on macOS &middot; Active now
+                      </p>
+                    </div>
                   </div>
+                  <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">
+                    Current
+                  </span>
                 </div>
               </div>
             </div>
           )}
 
-          {/* ─── Billing ─── */}
           {activeTab === "billing" && (
             <div className="space-y-5">
-              {/* Current plan */}
               <div className="rounded-2xl border border-gray-100 bg-white p-5">
                 <h2 className="text-sm font-semibold text-navy uppercase tracking-wider mb-4">
                   Current Plan
@@ -358,9 +522,14 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between p-4 rounded-xl bg-navy/[0.03] border border-navy/[0.08]">
                   <div>
                     <p className="font-semibold text-navy">Free Plan</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Up to 3 users, core features</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Up to 3 users, core features
+                    </p>
                   </div>
-                  <span className="text-lg font-bold text-navy">$0<span className="text-xs font-normal text-muted-foreground">/mo</span></span>
+                  <span className="text-lg font-bold text-navy">
+                    $0
+                    <span className="text-xs font-normal text-muted-foreground">/mo</span>
+                  </span>
                 </div>
                 <button
                   type="button"
@@ -371,7 +540,6 @@ export default function SettingsPage() {
                 </button>
               </div>
 
-              {/* Usage */}
               <div className="rounded-2xl border border-gray-100 bg-white p-5">
                 <h2 className="text-sm font-semibold text-navy uppercase tracking-wider mb-4">
                   Usage
@@ -385,7 +553,6 @@ export default function SettingsPage() {
                     <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                       <div className="h-full bg-amber-500 rounded-full" style={{ width: "100%" }} />
                     </div>
-                    <p className="text-[11px] text-amber-600 mt-1">Upgrade to add more members</p>
                   </div>
                   <div>
                     <div className="flex items-center justify-between text-sm mb-1.5">
@@ -408,7 +575,6 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {/* Payment method */}
               <div className="rounded-2xl border border-gray-100 bg-white p-5">
                 <h2 className="text-sm font-semibold text-navy uppercase tracking-wider mb-4">
                   Payment Method
@@ -429,7 +595,6 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {/* Danger zone */}
               <div className="rounded-2xl border border-red-100 bg-red-50/30 p-5">
                 <h2 className="text-sm font-semibold text-red-700 uppercase tracking-wider mb-2">
                   Danger Zone
@@ -449,9 +614,8 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Save toast */}
       {saved && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-navy text-white text-sm font-medium px-4 py-3 rounded-xl shadow-lg animate-in slide-in-from-bottom-2">
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-navy text-white text-sm font-medium px-4 py-3 rounded-xl shadow-lg">
           <Check className="w-4 h-4" />
           Changes saved
         </div>

@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Plus,
   Search,
-  MoreHorizontal,
   Shield,
   UserCheck,
   Mail,
@@ -13,7 +12,18 @@ import {
   X,
   Check,
   Clock,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+import { TableActionMenu } from "@/components/ui/TableActionMenu";
+import {
+  inviteMember,
+  listTeam,
+  removeMember,
+  resendInvite,
+  updateRole,
+} from "@/lib/api/team";
+import { ApiError } from "@/lib/api/client";
 
 /* ─── Types ─── */
 type Role = "Admin" | "Member";
@@ -26,16 +36,29 @@ interface Employee {
   role: Role;
   status: Status;
   addedOn: string;
-  avatar: string; // initials
+  avatar: string;
 }
 
-/* ─── Mock data ─── */
-const initialEmployees: Employee[] = [
-  { id: "1", name: "You (Owner)", email: "user@company.com", role: "Admin", status: "Active", addedOn: "Jan 15, 2026", avatar: "U" },
-  { id: "2", name: "Sarah Johnson", email: "sarah@company.com", role: "Member", status: "Active", addedOn: "Feb 3, 2026", avatar: "SJ" },
-  { id: "3", name: "Mike Chen", email: "mike@company.com", role: "Member", status: "Active", addedOn: "Feb 10, 2026", avatar: "MC" },
-  { id: "4", name: "Alex Rivera", email: "alex@company.com", role: "Admin", status: "Pending", addedOn: "Mar 8, 2026", avatar: "AR" },
-];
+const PAGE_SIZE = 5;
+
+function formatAddedOn(iso: string) {
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function initialsFor(name: string, email: string) {
+  if (name && name !== email) {
+    return name
+      .split(" ")
+      .map((p) => p[0]?.toUpperCase() || "")
+      .join("")
+      .slice(0, 2);
+  }
+  return email.slice(0, 2).toUpperCase();
+}
 
 const roleConfig: Record<Role, { label: string; icon: typeof Shield; bg: string }> = {
   Admin: { label: "Admin", icon: Shield, bg: "bg-navy/[0.06] text-navy" },
@@ -49,14 +72,40 @@ const statusConfig: Record<Status, { label: string; dot: string; bg: string }> =
 
 /* ─── Page ─── */
 export default function EmployeesPage() {
-  const [employees, setEmployees] = useState(initialEmployees);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [showInvite, setShowInvite] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<Role>("Member");
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [removeConfirm, setRemoveConfirm] = useState<string | null>(null);
-  const [roleChangeId, setRoleChangeId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+
+  const loadTeam = () => {
+    setLoading(true);
+    listTeam()
+      .then((members) => {
+        setEmployees(
+          members.map((m) => ({
+            id: m.id,
+            name: m.isOwner ? `${m.name} (Owner)` : m.name,
+            email: m.email,
+            role: (m.role === "Admin" ? "Admin" : "Member") as Role,
+            status: (m.status === "Active" ? "Active" : "Pending") as Status,
+            addedOn: formatAddedOn(m.addedOn),
+            avatar: m.avatar || initialsFor(m.name, m.email),
+          })),
+        );
+      })
+      .catch(() => setEmployees([]))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadTeam();
+  }, []);
 
   const filtered = employees.filter(
     (e) =>
@@ -65,56 +114,70 @@ export default function EmployeesPage() {
       e.email.toLowerCase().includes(search.toLowerCase())
   );
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageStart = (currentPage - 1) * PAGE_SIZE;
+  const paged = filtered.slice(pageStart, pageStart + PAGE_SIZE);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
   const adminCount = employees.filter((e) => e.role === "Admin").length;
   const memberCount = employees.filter((e) => e.role === "Member").length;
   const pendingCount = employees.filter((e) => e.status === "Pending").length;
 
-  const handleInvite = () => {
+  const handleInvite = async () => {
     if (!inviteEmail.trim()) return;
-    const initials = inviteEmail
-      .split("@")[0]
-      .split(".")
-      .map((p) => p[0]?.toUpperCase() || "")
-      .join("")
-      .slice(0, 2) || "?";
-
-    const newEmployee: Employee = {
-      id: String(Date.now()),
-      name: inviteEmail.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-      email: inviteEmail.trim(),
-      role: inviteRole,
-      status: "Pending",
-      addedOn: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-      avatar: initials,
-    };
-
-    setEmployees((prev) => [...prev, newEmployee]);
-    setInviteEmail("");
-    setInviteRole("Member");
-    setShowInvite(false);
+    setError(null);
+    try {
+      await inviteMember({
+        email: inviteEmail.trim(),
+        role: inviteRole,
+      });
+      loadTeam();
+      setInviteEmail("");
+      setInviteRole("Member");
+      setShowInvite(false);
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : "Unable to send invite.",
+      );
+    }
   };
 
-  const handleRemove = (id: string) => {
-    setEmployees((prev) => prev.filter((e) => e.id !== id));
+  const handleRemove = async (id: string) => {
+    try {
+      await removeMember(id);
+      loadTeam();
+    } catch {
+      /* ignore */
+    }
     setRemoveConfirm(null);
     setActiveMenu(null);
   };
 
-  const handleRoleChange = (id: string, newRole: Role) => {
-    setEmployees((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, role: newRole } : e))
-    );
-    setRoleChangeId(null);
+  const handleRoleChange = async (id: string, newRole: Role) => {
+    try {
+      await updateRole(id, newRole);
+      loadTeam();
+    } catch {
+      /* ignore */
+    }
     setActiveMenu(null);
   };
 
-  const handleResendInvite = (id: string) => {
-    // In real app: resend invite email
+  const handleResendInvite = async (id: string) => {
+    try {
+      await resendInvite(id);
+    } catch {
+      /* ignore */
+    }
     setActiveMenu(null);
   };
 
   return (
-    <div className="space-y-6 max-w-[900px]">
+    <div className="space-y-6 w-full">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -170,16 +233,17 @@ export default function EmployeesPage() {
       </div>
 
       {/* Info box */}
-      <div className="rounded-xl bg-navy/[0.03] border border-navy/[0.08] px-4 py-3">
-        <p className="text-xs text-navy/70 leading-relaxed">
-          <span className="font-semibold text-navy">How it works:</span>{" "}
+      <div className="rounded-xl border border-navy/15 bg-[#e8ebf2] px-4 py-3">
+        <p className="text-sm text-navy leading-relaxed">
+          <span className="font-semibold">How it works:</span>{" "}
           <span className="font-medium">Admins</span> can manage team, invoices, and expenses.{" "}
-          <span className="font-medium">Members</span> can add expenses and view their own data. You can change roles or remove access anytime.
+          <span className="font-medium">Members</span> can add expenses and view their own data. You
+          can change roles or remove access anytime.
         </p>
       </div>
 
       {/* Employee list */}
-      <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden">
+      <div className="rounded-2xl border border-gray-100 bg-white overflow-visible">
         {filtered.length === 0 ? (
           <div className="py-12 text-center">
             <p className="text-sm text-muted-foreground">No team members found</p>
@@ -187,10 +251,13 @@ export default function EmployeesPage() {
         ) : (
           <>
             {/* Desktop */}
-            <div className="hidden sm:block">
+            <div className="hidden sm:block overflow-x-auto overflow-y-visible">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100">
+                    <th className="px-5 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider w-14">
+                      #
+                    </th>
                     <th className="px-5 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                       Member
                     </th>
@@ -203,14 +270,23 @@ export default function EmployeesPage() {
                     <th className="px-5 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                       Added
                     </th>
-                    <th className="px-5 py-3 w-12" />
+                    <th className="px-5 py-3 text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((emp) => {
+                  {paged.map((emp, rowIndex) => {
                     const isOwner = emp.id === "1";
+                    const rowNumber = pageStart + rowIndex + 1;
                     return (
-                      <tr key={emp.id} className="border-t border-gray-50 hover:bg-gray-50/50 transition-colors group">
+                      <tr
+                        key={emp.id}
+                        className="border-t border-gray-50 hover:bg-gray-50/50 transition-colors"
+                      >
+                        <td className="px-5 py-3.5 text-sm font-medium text-gray-500 tabular-nums">
+                          {rowNumber}
+                        </td>
                         <td className="px-5 py-3.5">
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-full bg-navy/[0.06] flex items-center justify-center shrink-0">
@@ -223,7 +299,9 @@ export default function EmployeesPage() {
                           </div>
                         </td>
                         <td className="px-5 py-3.5">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${roleConfig[emp.role].bg}`}>
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${roleConfig[emp.role].bg}`}
+                          >
                             {emp.role === "Admin" ? (
                               <Shield className="w-3 h-3" />
                             ) : (
@@ -233,62 +311,76 @@ export default function EmployeesPage() {
                           </span>
                         </td>
                         <td className="px-5 py-3.5">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${statusConfig[emp.status].bg}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${statusConfig[emp.status].dot}`} />
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${statusConfig[emp.status].bg}`}
+                          >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${statusConfig[emp.status].dot}`}
+                            />
                             {statusConfig[emp.status].label}
                           </span>
                         </td>
                         <td className="px-5 py-3.5 text-muted-foreground text-xs">
                           {emp.addedOn}
                         </td>
-                        <td className="px-5 py-3.5">
-                          {!isOwner && (
-                            <div className="relative">
-                              <button
-                                type="button"
-                                onClick={() => setActiveMenu(activeMenu === emp.id ? null : emp.id)}
-                                className="p-1.5 rounded-lg text-muted-foreground hover:bg-gray-100 hover:text-navy opacity-0 group-hover:opacity-100 transition-all"
-                              >
-                                <MoreHorizontal className="w-4 h-4" />
-                              </button>
-                              {activeMenu === emp.id && (
+                        <td className="px-5 py-3.5 text-right">
+                          <div className="inline-flex justify-end">
+                            <TableActionMenu
+                              isOpen={activeMenu === emp.id}
+                              onToggle={() =>
+                                setActiveMenu(activeMenu === emp.id ? null : emp.id)
+                              }
+                              onClose={() => setActiveMenu(null)}
+                              ariaLabel={`Actions for ${emp.name}`}
+                              menuClassName="w-48"
+                            >
+                              {!isOwner && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleRoleChange(
+                                      emp.id,
+                                      emp.role === "Admin" ? "Member" : "Admin"
+                                    )
+                                  }
+                                  className="flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-gray-50 transition-colors w-full"
+                                >
+                                  <ArrowUpDown className="w-3.5 h-3.5" />
+                                  Make {emp.role === "Admin" ? "Member" : "Admin"}
+                                </button>
+                              )}
+                              {emp.status === "Pending" && !isOwner && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleResendInvite(emp.id)}
+                                  className="flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-gray-50 transition-colors w-full"
+                                >
+                                  <Mail className="w-3.5 h-3.5" />
+                                  Resend Invite
+                                </button>
+                              )}
+                              {isOwner ? (
+                                <p className="px-3 py-2 text-xs text-muted-foreground">
+                                  Owner account can’t be deleted
+                                </p>
+                              ) : (
                                 <>
-                                  <div className="fixed inset-0 z-10" onClick={() => setActiveMenu(null)} />
-                                  <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-100 z-20 py-1">
-                                    {/* Role switch */}
-                                    <button
-                                      type="button"
-                                      onClick={() => handleRoleChange(emp.id, emp.role === "Admin" ? "Member" : "Admin")}
-                                      className="flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-gray-50 transition-colors w-full"
-                                    >
-                                      <ArrowUpDown className="w-3.5 h-3.5" />
-                                      Make {emp.role === "Admin" ? "Member" : "Admin"}
-                                    </button>
-                                    {/* Resend if pending */}
-                                    {emp.status === "Pending" && (
-                                      <button
-                                        type="button"
-                                        onClick={() => handleResendInvite(emp.id)}
-                                        className="flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-gray-50 transition-colors w-full"
-                                      >
-                                        <Mail className="w-3.5 h-3.5" />
-                                        Resend Invite
-                                      </button>
-                                    )}
-                                    <div className="border-t border-gray-100 my-1" />
-                                    <button
-                                      type="button"
-                                      onClick={() => { setRemoveConfirm(emp.id); setActiveMenu(null); }}
-                                      className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors w-full"
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" />
-                                      Remove Access
-                                    </button>
-                                  </div>
+                                  <div className="border-t border-gray-100 my-1" />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setRemoveConfirm(emp.id);
+                                      setActiveMenu(null);
+                                    }}
+                                    className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors w-full"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    Delete Member
+                                  </button>
                                 </>
                               )}
-                            </div>
-                          )}
+                            </TableActionMenu>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -298,43 +390,155 @@ export default function EmployeesPage() {
             </div>
 
             {/* Mobile */}
-            <div className="sm:hidden divide-y divide-gray-50">
-              {filtered.map((emp) => {
+            <div className="sm:hidden divide-y divide-gray-50 overflow-visible">
+              {paged.map((emp, rowIndex) => {
                 const isOwner = emp.id === "1";
+                const rowNumber = pageStart + rowIndex + 1;
                 return (
-                  <div key={emp.id} className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-9 h-9 rounded-full bg-navy/[0.06] flex items-center justify-center shrink-0">
-                          <span className="text-xs font-bold text-navy">{emp.avatar}</span>
+                  <div key={emp.id} className="p-4 flex items-start gap-3">
+                    <span className="text-xs font-medium text-gray-500 tabular-nums w-5 shrink-0 pt-2">
+                      {rowNumber}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-9 h-9 rounded-full bg-navy/[0.06] flex items-center justify-center shrink-0">
+                            <span className="text-xs font-bold text-navy">{emp.avatar}</span>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-navy text-sm truncate">{emp.name}</p>
+                            <p className="text-[11px] text-muted-foreground truncate">
+                              {emp.email}
+                            </p>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <p className="font-medium text-navy text-sm truncate">{emp.name}</p>
-                          <p className="text-[11px] text-muted-foreground truncate">{emp.email}</p>
+                        <div className="shrink-0">
+                          <TableActionMenu
+                            isOpen={activeMenu === emp.id}
+                            onToggle={() =>
+                              setActiveMenu(activeMenu === emp.id ? null : emp.id)
+                            }
+                            onClose={() => setActiveMenu(null)}
+                            ariaLabel={`Actions for ${emp.name}`}
+                            menuClassName="w-48"
+                          >
+                            {!isOwner && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleRoleChange(
+                                      emp.id,
+                                      emp.role === "Admin" ? "Member" : "Admin"
+                                    )
+                                  }
+                                  className="flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-gray-50 transition-colors w-full"
+                                >
+                                  <ArrowUpDown className="w-3.5 h-3.5" />
+                                  Make {emp.role === "Admin" ? "Member" : "Admin"}
+                                </button>
+                                {emp.status === "Pending" && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleResendInvite(emp.id)}
+                                    className="flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-gray-50 transition-colors w-full"
+                                  >
+                                    <Mail className="w-3.5 h-3.5" />
+                                    Resend Invite
+                                  </button>
+                                )}
+                                <div className="border-t border-gray-100 my-1" />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setRemoveConfirm(emp.id);
+                                    setActiveMenu(null);
+                                  }}
+                                  className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors w-full"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  Delete Member
+                                </button>
+                              </>
+                            )}
+                            {isOwner && (
+                              <p className="px-3 py-2 text-xs text-muted-foreground">
+                                Owner account can’t be deleted
+                              </p>
+                            )}
+                          </TableActionMenu>
                         </div>
                       </div>
-                      {!isOwner && (
-                        <button
-                          type="button"
-                          onClick={() => setActiveMenu(activeMenu === emp.id ? null : emp.id)}
-                          className="p-1.5 rounded-lg text-muted-foreground hover:bg-gray-100 shrink-0"
+                      <div className="flex items-center gap-2 mt-2 ml-12">
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${roleConfig[emp.role].bg}`}
                         >
-                          <MoreHorizontal className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 mt-2 ml-12">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${roleConfig[emp.role].bg}`}>
-                        {emp.role}
-                      </span>
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusConfig[emp.status].bg}`}>
-                        <span className={`w-1 h-1 rounded-full ${statusConfig[emp.status].dot}`} />
-                        {statusConfig[emp.status].label}
-                      </span>
+                          {emp.role}
+                        </span>
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusConfig[emp.status].bg}`}
+                        >
+                          <span
+                            className={`w-1 h-1 rounded-full ${statusConfig[emp.status].dot}`}
+                          />
+                          {statusConfig[emp.status].label}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 );
               })}
+            </div>
+
+            {/* Pagination — inside white card */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-3.5 border-t border-gray-100">
+              <p className="text-xs text-muted-foreground">
+                Showing{" "}
+                <span className="font-medium text-navy">
+                  {filtered.length === 0 ? 0 : pageStart + 1}
+                </span>
+                –
+                <span className="font-medium text-navy">
+                  {Math.min(pageStart + PAGE_SIZE, filtered.length)}
+                </span>{" "}
+                of <span className="font-medium text-navy">{filtered.length}</span> members
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={currentPage <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-navy hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  Prev
+                </button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setPage(n)}
+                      className={`min-w-[32px] h-8 rounded-lg text-xs font-medium transition-colors ${
+                        n === currentPage
+                          ? "bg-navy text-white"
+                          : "text-navy hover:bg-gray-50"
+                      }`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-navy hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Next
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           </>
         )}
@@ -342,8 +546,14 @@ export default function EmployeesPage() {
 
       {/* ─── Invite modal ─── */}
       {showInvite && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setShowInvite(false)}>
-          <div className="rounded-2xl bg-white p-6 shadow-xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+          onClick={() => setShowInvite(false)}
+        >
+          <div
+            className="rounded-2xl bg-white p-6 shadow-xl max-w-md w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-lg font-semibold text-navy">Invite Team Member</h3>
               <button
@@ -356,7 +566,6 @@ export default function EmployeesPage() {
             </div>
 
             <div className="space-y-4">
-              {/* Email */}
               <div>
                 <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
                   Email address
@@ -371,7 +580,6 @@ export default function EmployeesPage() {
                 />
               </div>
 
-              {/* Role selector */}
               <div>
                 <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   Role
@@ -433,16 +641,25 @@ export default function EmployeesPage() {
         </div>
       )}
 
-      {/* ─── Remove confirmation ─── */}
+      {/* ─── Delete member confirmation ─── */}
       {removeConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setRemoveConfirm(null)}>
-          <div className="rounded-2xl bg-white p-6 shadow-xl max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+          onClick={() => setRemoveConfirm(null)}
+        >
+          <div
+            className="rounded-2xl bg-white p-6 shadow-xl max-w-sm w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto">
               <Trash2 className="w-5 h-5 text-red-600" />
             </div>
-            <h3 className="text-lg font-semibold text-navy text-center mt-4">Remove access?</h3>
+            <h3 className="text-lg font-semibold text-navy text-center mt-4">
+              Delete member?
+            </h3>
             <p className="mt-2 text-sm text-muted-foreground text-center">
-              This person will lose access to the workspace immediately. You can invite them again later.
+              This person will lose access to the workspace immediately. You can invite them again
+              later.
             </p>
             <div className="mt-6 flex gap-3">
               <button
@@ -457,7 +674,7 @@ export default function EmployeesPage() {
                 onClick={() => handleRemove(removeConfirm)}
                 className="flex-1 rounded-xl bg-red-600 text-white font-medium py-2.5 text-sm hover:bg-red-700 transition-colors"
               >
-                Remove
+                Delete Member
               </button>
             </div>
           </div>

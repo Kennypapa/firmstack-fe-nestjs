@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { ArrowRight, Eye, EyeOff, User, Briefcase, Check } from "lucide-react";
+import * as authApi from "@/lib/api/auth";
+import { useAuthStore } from "@/stores/auth";
+import { ApiError } from "@/lib/api/client";
 
 const WORKSPACE_KEY = "firmstack_workspace";
 
@@ -20,25 +23,58 @@ type WorkspaceType = "personal" | "company";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const setSession = useAuthStore((s) => s.setSession);
   const [showPassword, setShowPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [workspaceType, setWorkspaceType] = useState<WorkspaceType>("personal");
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     companyName: "",
     email: "",
     password: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (typeof window !== "undefined") {
-      window.sessionStorage.setItem(WORKSPACE_KEY, workspaceType);
+    if (!agreedToTerms) {
+      setError("Please agree to the terms to continue.");
+      return;
     }
-    if (workspaceType === "personal") {
-      router.push("/dashboard");
-    } else {
-      router.push("/onboarding");
+
+    setError(null);
+    setLoading(true);
+
+    try {
+      const result = await authApi.register({
+        workspaceType,
+        companyName:
+          workspaceType === "company" ? form.companyName : undefined,
+        email: form.email,
+        password: form.password,
+        agreedToTerms,
+      });
+
+      await setSession(result.accessToken);
+
+      if (typeof window !== "undefined") {
+        window.sessionStorage.setItem(WORKSPACE_KEY, workspaceType);
+      }
+
+      if (result.nextStep === "onboarding") {
+        router.push("/onboarding");
+      } else {
+        router.push("/dashboard");
+      }
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "Unable to create account. Try again.",
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -95,6 +131,11 @@ export default function RegisterPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
         {/* Workspace type toggle */}
         <div>
           <label className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">
@@ -286,11 +327,12 @@ export default function RegisterPage() {
         {/* Submit */}
         <button
           type="submit"
-          className="group relative w-full flex items-center justify-center gap-2 h-14 rounded-2xl bg-navy text-white font-semibold text-[15px] overflow-hidden transition-all hover:shadow-lg hover:shadow-navy/20 active:scale-[0.98]"
+          disabled={loading}
+          className="group relative w-full flex items-center justify-center gap-2 h-14 rounded-2xl bg-navy text-white font-semibold text-[15px] overflow-hidden transition-all hover:shadow-lg hover:shadow-navy/20 active:scale-[0.98] disabled:opacity-60"
         >
           <span className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <span className="relative flex items-center gap-2">
-            Create account
+            {loading ? "Creating account..." : "Create account"}
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </span>
         </button>

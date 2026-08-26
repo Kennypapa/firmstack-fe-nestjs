@@ -5,14 +5,31 @@ import Link from "next/link";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { ArrowRight, ArrowLeft, CheckCircle, Mail } from "lucide-react";
 
+import { forgotPassword } from "@/lib/api/auth";
+import { ApiError } from "@/lib/api/client";
+
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setError(null);
+    setLoading(true);
+
+    try {
+      await forgotPassword(email);
+      setSubmitted(true);
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : "Unable to send reset link.",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -63,6 +80,11 @@ export default function ForgotPasswordPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+            {error && (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {error}
+              </div>
+            )}
             {/* Email — floating label */}
             <div className="relative">
               <input
@@ -95,11 +117,12 @@ export default function ForgotPasswordPage() {
 
             <button
               type="submit"
-              className="group relative w-full flex items-center justify-center gap-2 h-14 rounded-2xl bg-navy text-white font-semibold text-[15px] overflow-hidden transition-all hover:shadow-lg hover:shadow-navy/20 active:scale-[0.98]"
+              disabled={loading}
+              className="group relative w-full flex items-center justify-center gap-2 h-14 rounded-2xl bg-navy text-white font-semibold text-[15px] overflow-hidden transition-all hover:shadow-lg hover:shadow-navy/20 active:scale-[0.98] disabled:opacity-60"
             >
               <span className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <span className="relative flex items-center gap-2">
-                Send reset link
+                {loading ? "Sending..." : "Send reset link"}
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </span>
             </button>

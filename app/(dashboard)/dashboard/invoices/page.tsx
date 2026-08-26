@@ -16,24 +16,29 @@ import {
   Eye,
   Pencil,
   Trash2,
-  ChevronDown,
   Send,
   Download,
-  MoreHorizontal,
-  ArrowUpRight,
-  Filter,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+import { TableActionMenu } from "@/components/ui/TableActionMenu";
+import { listInvoices, deleteInvoice } from "@/lib/api/invoices";
+import { formatInvoiceStatus } from "@/lib/format";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 
-/* ─── Mock data ─── */
-const mockInvoices = [
-  { id: "INV-028", client: "Acme Corp", email: "billing@acme.com", amount: 4200, dueDate: "2026-03-20", status: "Pending" as const },
-  { id: "INV-027", client: "TechStart Inc", email: "pay@techstart.io", amount: 2800, dueDate: "2026-03-15", status: "Paid" as const },
-  { id: "INV-026", client: "Global Ltd", email: "finance@global.com", amount: 5100, dueDate: "2026-02-10", status: "Overdue" as const },
-  { id: "INV-025", client: "Design Co", email: "hello@designco.com", amount: 1950, dueDate: "2026-03-05", status: "Paid" as const },
-  { id: "INV-024", client: "Beta Agency", email: "admin@beta.agency", amount: 3200, dueDate: "2026-04-01", status: "Draft" as const },
-];
+/* ─── Types ─── */
+type InvoiceRow = {
+  uuid: string;
+  id: string;
+  client: string;
+  email: string;
+  amount: number;
+  dueDate: string;
+  status: StatusKey;
+};
+
+const PAGE_SIZE = 5;
 
 const statusConfig = {
   Paid: { label: "Paid", dot: "bg-emerald-500", className: "bg-emerald-50 text-emerald-700" },
@@ -78,7 +83,7 @@ function EmptyState() {
       </p>
       <div className="mt-6 flex items-center justify-center gap-3">
         <Link
-          href="/dashboard/invoices/new"
+          href="/dashboard/invoices/templates"
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-navy text-white text-sm font-semibold hover:bg-navy/90 transition-colors"
         >
           <Plus className="w-4 h-4" />
@@ -109,12 +114,21 @@ function EmptyState() {
 /* ─── Page ─── */
 export default function InvoicesPage() {
   const router = useRouter();
+  const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [dateRange, setDateRange] = useState(defaultRange);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [aggregates, setAggregates] = useState({
+    totalInvoiced: 0,
+    paid: 0,
+    pending: 0,
+    overdue: 0,
+  });
   const pickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -129,31 +143,67 @@ export default function InvoicesPage() {
     }
   }, [pickerOpen]);
 
-  // Close action menu on outside click
   useEffect(() => {
-    if (!activeMenu) return;
-    const close = () => setActiveMenu(null);
-    document.addEventListener("click", close);
-    return () => document.removeEventListener("click", close);
-  }, [activeMenu]);
+    let cancelled = false;
+    setLoading(true);
 
-  const filtered = mockInvoices.filter((inv) => {
-    const matchSearch =
-      !search ||
-      inv.client.toLowerCase().includes(search.toLowerCase()) ||
-      inv.id.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === "All" || inv.status === statusFilter;
-    const invDue = inv.dueDate;
-    const from = dateRange.startDate ? format(dateRange.startDate, "yyyy-MM-dd") : null;
-    const to = dateRange.endDate ? format(dateRange.endDate, "yyyy-MM-dd") : null;
-    const matchDate = !from || !to || (invDue >= from && invDue <= to);
-    return matchSearch && matchStatus && matchDate;
-  });
+    const statusParam =
+      statusFilter === "All"
+        ? undefined
+        : statusFilter.toUpperCase();
 
-  const totalInvoiced = mockInvoices.reduce((s, i) => s + i.amount, 0);
-  const paid = mockInvoices.filter((i) => i.status === "Paid").reduce((s, i) => s + i.amount, 0);
-  const pending = mockInvoices.filter((i) => i.status === "Pending").reduce((s, i) => s + i.amount, 0);
-  const overdue = mockInvoices.filter((i) => i.status === "Overdue").reduce((s, i) => s + i.amount, 0);
+    listInvoices({
+      search: search || undefined,
+      status: statusParam,
+      fromDate: dateRange.startDate
+        ? format(dateRange.startDate, "yyyy-MM-dd")
+        : undefined,
+      toDate: dateRange.endDate
+        ? format(dateRange.endDate, "yyyy-MM-dd")
+        : undefined,
+    })
+      .then((res) => {
+        if (cancelled) return;
+        setInvoices(
+          res.data.map((inv) => ({
+            uuid: inv.id,
+            id: inv.number,
+            client: inv.client.name,
+            email: inv.client.email,
+            amount: inv.grandTotal,
+            dueDate: inv.dueDate.slice(0, 10),
+            status: formatInvoiceStatus(inv.status) as StatusKey,
+          })),
+        );
+        setAggregates(res.aggregates);
+      })
+      .catch(() => {
+        if (!cancelled) setInvoices([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [search, statusFilter, dateRange]);
+
+  const filtered = invoices;
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageStart = (currentPage - 1) * PAGE_SIZE;
+  const paged = filtered.slice(pageStart, pageStart + PAGE_SIZE);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter, dateRange]);
+
+  const totalInvoiced = aggregates.totalInvoiced;
+  const paid = aggregates.paid;
+  const pending = aggregates.pending;
+  const overdue = aggregates.overdue;
 
   const summaryCards = [
     { label: "Total Invoiced", value: totalInvoiced, icon: FileText, bg: "bg-navy/[0.06]", color: "text-navy" },
@@ -163,7 +213,7 @@ export default function InvoicesPage() {
   ];
 
   return (
-    <div className="space-y-6 max-w-[1400px]">
+    <div className="space-y-6 w-full">
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -174,7 +224,7 @@ export default function InvoicesPage() {
             </p>
           </div>
           <Link
-            href="/dashboard/invoices/new"
+            href="/dashboard/invoices/templates"
             className="inline-flex items-center gap-2 rounded-xl bg-navy text-white font-semibold px-5 py-2.5 text-sm hover:bg-navy/90 transition-colors w-fit"
           >
             <Plus className="w-4 h-4" />
@@ -203,7 +253,7 @@ export default function InvoicesPage() {
                 onClick={() => setStatusFilter(s)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                   statusFilter === s
-                    ? "bg-white text-navy shadow-sm"
+                    ? "bg-navy text-white shadow-sm"
                     : "text-muted-foreground hover:text-navy"
                 }`}
               >
@@ -271,16 +321,21 @@ export default function InvoicesPage() {
       </div>
 
       {/* Invoice list */}
-      <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden">
-        {filtered.length === 0 ? (
+      <div className="rounded-2xl border border-gray-100 bg-white overflow-visible">
+        {loading ? (
+          <div className="p-12 text-center text-sm text-muted-foreground">Loading invoices…</div>
+        ) : filtered.length === 0 ? (
           <EmptyState />
         ) : (
           <>
             {/* Desktop table */}
-            <div className="hidden md:block overflow-x-auto">
+            <div className="hidden md:block overflow-x-auto overflow-y-visible">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100">
+                    <th className="px-5 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider w-14">
+                      #
+                    </th>
                     <th className="px-5 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                       Invoice
                     </th>
@@ -296,63 +351,73 @@ export default function InvoicesPage() {
                     <th className="px-5 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-5 py-3 w-12" />
+                    <th className="px-5 py-3 text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((inv) => (
-                    <tr
-                      key={inv.id}
-                      className="border-t border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors group"
-                      onClick={() => router.push(`/dashboard/invoices/${inv.id}`)}
-                    >
-                      <td className="px-5 py-3.5">
-                        <span className="font-semibold text-navy">{inv.id}</span>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <div>
-                          <p className="font-medium text-navy">{inv.client}</p>
-                          <p className="text-[11px] text-muted-foreground">{inv.email}</p>
-                        </div>
-                      </td>
-                      <td className="px-5 py-3.5 font-semibold text-navy">
-                        ${inv.amount.toLocaleString()}
-                      </td>
-                      <td className="px-5 py-3.5 text-muted-foreground">
-                        {format(new Date(inv.dueDate), "MMM d, yyyy")}
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
-                            statusConfig[inv.status as StatusKey].className
-                          }`}
-                        >
-                          <span className={`w-1.5 h-1.5 rounded-full ${statusConfig[inv.status as StatusKey].dot}`} />
-                          {statusConfig[inv.status as StatusKey].label}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5" onClick={(e) => e.stopPropagation()}>
-                        <div className="relative">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveMenu(activeMenu === inv.id ? null : inv.id);
-                            }}
-                            className="p-1.5 rounded-lg text-muted-foreground hover:bg-gray-100 hover:text-navy opacity-0 group-hover:opacity-100 transition-all"
+                  {paged.map((inv, rowIndex) => {
+                    const rowNumber = pageStart + rowIndex + 1;
+                    return (
+                      <tr
+                        key={inv.uuid}
+                        className="border-t border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors"
+                        onClick={() => router.push(`/dashboard/invoices/${inv.uuid}`)}
+                      >
+                        <td className="px-5 py-3.5 text-sm font-medium text-gray-500 tabular-nums">
+                          {rowNumber}
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <span className="font-semibold text-navy">{inv.id}</span>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <div>
+                            <p className="font-medium text-navy">{inv.client}</p>
+                            <p className="text-[11px] text-muted-foreground">{inv.email}</p>
+                          </div>
+                        </td>
+                        <td className="px-5 py-3.5 font-semibold text-navy">
+                          ${inv.amount.toLocaleString()}
+                        </td>
+                        <td className="px-5 py-3.5 text-muted-foreground">
+                          {format(new Date(inv.dueDate), "MMM d, yyyy")}
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+                              statusConfig[inv.status as StatusKey].className
+                            }`}
                           >
-                            <MoreHorizontal className="w-4 h-4" />
-                          </button>
-                          {activeMenu === inv.id && (
-                            <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-xl shadow-lg border border-gray-100 z-20 py-1">
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                statusConfig[inv.status as StatusKey].dot
+                              }`}
+                            />
+                            {statusConfig[inv.status as StatusKey].label}
+                          </span>
+                        </td>
+                        <td
+                          className="px-5 py-3.5 text-right"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="inline-flex justify-end">
+                            <TableActionMenu
+                              isOpen={activeMenu === inv.uuid}
+                              onToggle={() =>
+                                setActiveMenu(activeMenu === inv.uuid ? null : inv.uuid)
+                              }
+                              onClose={() => setActiveMenu(null)}
+                              ariaLabel={`Actions for ${inv.id}`}
+                            >
                               <Link
-                                href={`/dashboard/invoices/${inv.id}`}
+                                href={`/dashboard/invoices/${inv.uuid}`}
                                 className="flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-gray-50 transition-colors"
                               >
                                 <Eye className="w-3.5 h-3.5" /> View
                               </Link>
                               <Link
-                                href={`/dashboard/invoices/${inv.id}/edit`}
+                                href={`/dashboard/invoices/${inv.uuid}/edit`}
                                 className="flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-gray-50 transition-colors"
                               >
                                 <Pencil className="w-3.5 h-3.5" /> Edit
@@ -372,49 +437,146 @@ export default function InvoicesPage() {
                               <div className="border-t border-gray-100 my-1" />
                               <button
                                 type="button"
-                                onClick={() => { setDeleteConfirm(inv.id); setActiveMenu(null); }}
+                                onClick={() => {
+                                  setDeleteConfirm(inv.uuid);
+                                  setActiveMenu(null);
+                                }}
                                 className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors w-full"
                               >
                                 <Trash2 className="w-3.5 h-3.5" /> Delete
                               </button>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                            </TableActionMenu>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
             {/* Mobile card list */}
-            <div className="md:hidden divide-y divide-gray-50">
-              {filtered.map((inv) => (
-                <Link
-                  key={inv.id}
-                  href={`/dashboard/invoices/${inv.id}`}
-                  className="flex items-center justify-between p-4 hover:bg-gray-50/50 transition-colors"
-                >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold text-navy text-sm">{inv.client}</p>
-                      <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                          statusConfig[inv.status as StatusKey].className
-                        }`}
+            <div className="md:hidden divide-y divide-gray-50 overflow-visible">
+              {paged.map((inv, rowIndex) => {
+                const rowNumber = pageStart + rowIndex + 1;
+                return (
+                  <div
+                    key={inv.uuid}
+                    className="flex items-center justify-between gap-3 p-4 hover:bg-gray-50/50 transition-colors"
+                  >
+                    <span className="text-xs font-medium text-gray-500 tabular-nums w-5 shrink-0">
+                      {rowNumber}
+                    </span>
+                    <Link
+                      href={`/dashboard/invoices/${inv.uuid}`}
+                      className="flex items-center justify-between flex-1 min-w-0"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-navy text-sm">{inv.client}</p>
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                              statusConfig[inv.status as StatusKey].className
+                            }`}
+                          >
+                            {statusConfig[inv.status as StatusKey].label}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          {inv.id} &middot; Due {format(new Date(inv.dueDate), "MMM d")}
+                        </p>
+                      </div>
+                      <p className="font-bold text-navy text-sm shrink-0 ml-3">
+                        ${inv.amount.toLocaleString()}
+                      </p>
+                    </Link>
+                    <div className="shrink-0">
+                      <TableActionMenu
+                        isOpen={activeMenu === inv.uuid}
+                        onToggle={() =>
+                          setActiveMenu(activeMenu === inv.uuid ? null : inv.uuid)
+                        }
+                        onClose={() => setActiveMenu(null)}
+                        ariaLabel={`Actions for ${inv.id}`}
                       >
-                        {statusConfig[inv.status as StatusKey].label}
-                      </span>
+                        <Link
+                          href={`/dashboard/invoices/${inv.uuid}`}
+                          className="flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-gray-50 transition-colors"
+                        >
+                          <Eye className="w-3.5 h-3.5" /> View
+                        </Link>
+                        <Link
+                          href={`/dashboard/invoices/${inv.id}/edit`}
+                          className="flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-gray-50 transition-colors"
+                        >
+                          <Pencil className="w-3.5 h-3.5" /> Edit
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDeleteConfirm(inv.id);
+                            setActiveMenu(null);
+                          }}
+                          className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors w-full"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Delete
+                        </button>
+                      </TableActionMenu>
                     </div>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
-                      {inv.id} &middot; Due {format(new Date(inv.dueDate), "MMM d")}
-                    </p>
                   </div>
-                  <p className="font-bold text-navy text-sm shrink-0 ml-3">
-                    ${inv.amount.toLocaleString()}
-                  </p>
-                </Link>
-              ))}
+                );
+              })}
+            </div>
+
+            {/* Pagination — inside white card */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-3.5 border-t border-gray-100">
+              <p className="text-xs text-muted-foreground">
+                Showing{" "}
+                <span className="font-medium text-navy">
+                  {filtered.length === 0 ? 0 : pageStart + 1}
+                </span>
+                –
+                <span className="font-medium text-navy">
+                  {Math.min(pageStart + PAGE_SIZE, filtered.length)}
+                </span>{" "}
+                of <span className="font-medium text-navy">{filtered.length}</span> invoices
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={currentPage <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-navy hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  Prev
+                </button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setPage(n)}
+                      className={`min-w-[32px] h-8 rounded-lg text-xs font-medium transition-colors ${
+                        n === currentPage
+                          ? "bg-navy text-white"
+                          : "text-navy hover:bg-gray-50"
+                      }`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-navy hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Next
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           </>
         )}
@@ -444,7 +606,16 @@ export default function InvoicesPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setDeleteConfirm(null)}
+                onClick={async () => {
+                  if (!deleteConfirm) return;
+                  try {
+                    await deleteInvoice(deleteConfirm);
+                    setInvoices((prev) => prev.filter((i) => i.uuid !== deleteConfirm));
+                  } catch {
+                    /* ignore */
+                  }
+                  setDeleteConfirm(null);
+                }}
                 className="flex-1 rounded-xl bg-red-600 text-white font-medium py-2.5 text-sm hover:bg-red-700 transition-colors"
               >
                 Delete

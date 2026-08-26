@@ -176,7 +176,7 @@ export function DashboardSidebar({
     <>
       {/* Desktop sidebar */}
       <aside
-        className={`hidden lg:flex fixed left-0 top-0 z-20 flex-col h-screen overflow-hidden text-white bg-navy transition-all duration-200 ${
+        className={`hidden lg:flex fixed left-0 top-0 z-50 flex-col h-screen overflow-hidden text-white bg-navy transition-all duration-200 ${
           collapsed ? "w-[72px]" : "w-64"
         }`}
       >
@@ -185,7 +185,7 @@ export function DashboardSidebar({
 
       {/* Mobile sidebar drawer */}
       <aside
-        className={`lg:hidden fixed left-0 top-0 z-40 flex flex-col h-screen w-72 overflow-hidden text-white bg-navy transition-transform duration-300 ${
+        className={`lg:hidden fixed left-0 top-0 z-50 flex flex-col h-screen w-72 overflow-hidden text-white bg-navy transition-transform duration-300 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >

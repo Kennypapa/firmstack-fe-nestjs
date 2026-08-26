@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Clock, Calendar, FileText } from "lucide-react";
+import { getPortalMe } from "@/lib/api/portal";
 
 const cards = [
   {
@@ -25,17 +27,34 @@ const cards = [
 ];
 
 export default function PortalDashboardPage() {
-  const firstName = "Alex";
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
+  const [greeting, setGreeting] = useState("Hello");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getPortalMe()
+      .then((data) => setGreeting(data.greeting))
+      .catch(() => {
+        const hour = new Date().getHours();
+        setGreeting(
+          hour < 12
+            ? "Good Morning"
+            : hour < 18
+              ? "Good Afternoon"
+              : "Good Evening",
+        );
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10">
       <div className="mb-12">
         <h1 className="text-3xl font-bold text-navy">
-          {greeting}, {firstName}
+          {loading ? "Loading…" : greeting}
         </h1>
-        <p className="mt-2 text-muted-foreground text-lg">Here&apos;s what you need today.</p>
+        <p className="mt-2 text-muted-foreground text-lg">
+          Here&apos;s what you need today.
+        </p>
       </div>
 
       <div className="space-y-4">

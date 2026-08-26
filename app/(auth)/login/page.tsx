@@ -2,18 +2,40 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { ArrowRight, Eye, EyeOff } from "lucide-react";
+import * as authApi from "@/lib/api/auth";
+import { useAuthStore } from "@/stores/auth";
+import { ApiError } from "@/lib/api/client";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const setSession = useAuthStore((s) => s.setSession);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    window.location.href = "/dashboard";
+    setError(null);
+    setLoading(true);
+
+    try {
+      const result = await authApi.login({ email, password, rememberMe });
+      await setSession(result.accessToken);
+      router.push("/dashboard");
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : "Unable to sign in. Try again.",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -66,6 +88,12 @@ export default function LoginPage() {
       </div>
 
       {/* Form */}
+      {error && (
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
         {/* Email field — floating label style */}
         <div className="relative group">
@@ -156,6 +184,8 @@ export default function LoginPage() {
               <input
                 type="checkbox"
                 className="peer sr-only"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
               />
               <div className="w-5 h-5 rounded-md border-2 border-gray-300 bg-white peer-checked:bg-navy peer-checked:border-navy transition-all peer-focus-visible:ring-2 peer-focus-visible:ring-primary/20 group-hover:border-gray-400" />
               <svg
@@ -182,11 +212,12 @@ export default function LoginPage() {
         {/* Submit button */}
         <button
           type="submit"
-          className="group relative w-full flex items-center justify-center gap-2 h-14 rounded-2xl bg-navy text-white font-semibold text-[15px] overflow-hidden transition-all hover:shadow-lg hover:shadow-navy/20 active:scale-[0.98]"
+          disabled={loading}
+          className="group relative w-full flex items-center justify-center gap-2 h-14 rounded-2xl bg-navy text-white font-semibold text-[15px] overflow-hidden transition-all hover:shadow-lg hover:shadow-navy/20 active:scale-[0.98] disabled:opacity-60"
         >
           <span className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <span className="relative flex items-center gap-2">
-            Sign in
+            {loading ? "Signing in..." : "Sign in"}
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </span>
         </button>

@@ -11,6 +11,8 @@ import {
   ArrowLeft,
   Check,
 } from "lucide-react";
+import { completeOnboarding } from "@/lib/api/workspaces";
+import { ApiError } from "@/lib/api/client";
 
 const WORKSPACE_KEY = "firmstack_workspace";
 
@@ -50,12 +52,46 @@ export default function OnboardingPage() {
   const [employee, setEmployee] = useState({ email: "", name: "", role: "Staff" });
   const [addEmployee, setAddEmployee] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>("free");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleFinish = () => {
-    if (typeof window !== "undefined") {
-      window.sessionStorage.setItem(WORKSPACE_KEY, "company");
+  const handleFinish = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      const planMap: Record<string, "FREE" | "PRO" | "ENTERPRISE"> = {
+        free: "FREE",
+        pro: "PRO",
+        enterprise: "ENTERPRISE",
+      };
+
+      await completeOnboarding({
+        industry: company.industry || undefined,
+        size: company.size || undefined,
+        planId: planMap[selectedPlan ?? "free"] ?? "FREE",
+        employee:
+          addEmployee && employee.email.trim()
+            ? {
+                name: employee.name.trim() || employee.email.split("@")[0],
+                email: employee.email.trim(),
+                role: employee.role === "Admin" ? "Admin" : "Member",
+              }
+            : undefined,
+      });
+
+      if (typeof window !== "undefined") {
+        window.sessionStorage.setItem(WORKSPACE_KEY, "company");
+      }
+      router.push("/dashboard");
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "Unable to complete onboarding.",
+      );
+    } finally {
+      setLoading(false);
     }
-    router.push("/dashboard");
   };
 
   useEffect(() => {
@@ -425,7 +461,8 @@ export default function OnboardingPage() {
                   <button
                     type="button"
                     onClick={handleFinish}
-                    className="group relative flex-1 flex items-center justify-center gap-2 h-14 rounded-2xl bg-navy text-white font-semibold text-[15px] overflow-hidden transition-all hover:shadow-lg hover:shadow-navy/20 active:scale-[0.98]"
+                    disabled={loading}
+                    className="group relative flex-1 flex items-center justify-center gap-2 h-14 rounded-2xl bg-navy text-white font-semibold text-[15px] overflow-hidden transition-all hover:shadow-lg hover:shadow-navy/20 active:scale-[0.98] disabled:opacity-60"
                   >
                     <span className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <span className="relative flex items-center gap-2">

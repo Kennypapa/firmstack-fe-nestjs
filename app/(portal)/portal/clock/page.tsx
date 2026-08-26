@@ -1,20 +1,51 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { clockIn, clockOut, getTodayClock } from "@/lib/api/portal";
 
 export default function PortalClockPage() {
   const [clockedIn, setClockedIn] = useState(false);
-  const [clockedInAt, setClockedInAt] = useState<string | null>(null);
+  const [clockInTime, setClockInTime] = useState<string | null>(null);
+  const [clockOutTime, setClockOutTime] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
 
-  const handleToggle = () => {
-    if (clockedIn) {
-      setClockedIn(false);
-      setClockedInAt(null);
-    } else {
-      setClockedIn(true);
-      setClockedInAt(new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }));
+  const loadStatus = () => {
+    getTodayClock()
+      .then((data) => {
+        setClockedIn(data.clockedIn);
+        setClockInTime(data.clockInTime ?? null);
+        setClockOutTime(data.clockOutTime ?? null);
+      })
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadStatus();
+  }, []);
+
+  const formatTime = (iso?: string | null) => {
+    if (!iso) return "—";
+    return new Date(iso).toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  const handleToggle = async () => {
+    setBusy(true);
+    try {
+      if (clockedIn) {
+        await clockOut();
+      } else {
+        await clockIn();
+      }
+      loadStatus();
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -31,12 +62,17 @@ export default function PortalClockPage() {
       <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-sm text-center">
         <p className="text-sm font-medium text-muted-foreground">Current Status</p>
         <p className="mt-2 text-2xl font-bold text-navy">
-          {clockedIn ? `Clocked In at ${clockedInAt}` : "Not Clocked In"}
+          {loading
+            ? "Loading…"
+            : clockedIn
+              ? `Clocked In at ${formatTime(clockInTime)}`
+              : "Not Clocked In"}
         </p>
         <button
           type="button"
           onClick={handleToggle}
-          className="mt-8 w-full max-w-xs mx-auto rounded-xl bg-navy text-white font-semibold py-4 text-lg hover:bg-navy/90 transition-colors"
+          disabled={loading || busy}
+          className="mt-8 w-full max-w-xs mx-auto rounded-xl bg-navy text-white font-semibold py-4 text-lg hover:bg-navy/90 transition-colors disabled:opacity-60"
         >
           {clockedIn ? "CLOCK OUT" : "CLOCK IN"}
         </button>
@@ -46,10 +82,10 @@ export default function PortalClockPage() {
         <p className="text-sm font-semibold text-navy mb-4">Today</p>
         <div className="space-y-2 text-sm">
           <p className="text-muted-foreground">
-            Clock In: {clockedInAt ?? "—"}
+            Clock In: {formatTime(clockInTime)}
           </p>
           <p className="text-muted-foreground">
-            Clock Out: —
+            Clock Out: {formatTime(clockOutTime)}
           </p>
         </div>
       </div>

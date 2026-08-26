@@ -4,15 +4,33 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { portalLogin } from "@/lib/api/portal";
+import { useAuthStore } from "@/stores/auth";
+import { ApiError } from "@/lib/api/client";
 
 export default function PortalLoginPage() {
   const router = useRouter();
+  const setSession = useAuthStore((s) => s.setSession);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    router.push("/portal");
+    setError(null);
+    setLoading(true);
+    try {
+      const result = await portalLogin({ email, password });
+      await setSession(result.accessToken);
+      router.push("/portal");
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : "Unable to sign in.",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -52,11 +70,15 @@ export default function PortalLoginPage() {
             </div>
             <button
               type="submit"
-              className="w-full rounded-xl bg-navy text-white font-semibold py-3.5 hover:bg-navy/90 transition-colors"
+              disabled={loading}
+              className="w-full rounded-xl bg-navy text-white font-semibold py-3.5 hover:bg-navy/90 transition-colors disabled:opacity-60"
             >
-              Login
+              {loading ? "Signing in…" : "Login"}
             </button>
           </form>
+          {error && (
+            <p className="mt-4 text-sm text-red-600 text-center">{error}</p>
+          )}
           <p className="mt-6 text-center">
             <Link href="/forgot-password" className="text-sm font-medium text-navy hover:underline">
               Forgot Password
