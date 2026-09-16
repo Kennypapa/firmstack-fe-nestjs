@@ -28,6 +28,8 @@ import {
   RecentInvoicesWidget,
   RecentExpensesWidget,
 } from "@/components/dashboard/DashboardWidgets";
+import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
+import { useDashboardDataStore } from "@/stores/dashboard-data";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 
@@ -52,10 +54,10 @@ export function DashboardGrid() {
   const isEditing = useDashboardLayoutStore((s) => s.isEditing);
   const setLayouts = useDashboardLayoutStore((s) => s.setLayouts);
   const setBreakpoint = useDashboardLayoutStore((s) => s.setBreakpoint);
+  const loaded = useDashboardDataStore((s) => s.loaded);
   const { width, containerRef, mounted } = useContainerWidth();
   const [isShaking, setIsShaking] = useState(false);
 
-  // Light CSS jiggle while customizing: 3s burst every 30 seconds
   useEffect(() => {
     if (!isEditing) {
       setIsShaking(false);
@@ -95,8 +97,8 @@ export function DashboardGrid() {
     []
   );
 
-  // Drag to rearrange only — hide the bottom-right resize handle
   const allowResize = false;
+  const showGrid = mounted && width > 0 && loaded;
 
   return (
     <div
@@ -108,7 +110,9 @@ export function DashboardGrid() {
         .filter(Boolean)
         .join(" ") || undefined}
     >
-      {mounted && width > 0 && (
+      {!showGrid ? (
+        <DashboardSkeleton />
+      ) : (
         <ResponsiveGridLayout
           className="layout"
           width={width}

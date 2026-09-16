@@ -27,6 +27,7 @@ import {
   updateNotifications,
   updateSettings,
 } from "@/lib/api/workspaces";
+import { CURRENCIES } from "@/lib/currencies";
 
 type Tab = "general" | "notifications" | "security" | "billing";
 
@@ -63,6 +64,9 @@ export default function SettingsPage() {
 
   const [companyName, setCompanyName] = useState("My Company");
   const [companyEmail, setCompanyEmail] = useState("user@company.com");
+  const [companyPhone, setCompanyPhone] = useState("");
+  const [companyAddress, setCompanyAddress] = useState("");
+  const [companyTaxId, setCompanyTaxId] = useState("");
   const [companyLogo, setCompanyLogo] = useState<string | null>(null);
   const [currency, setCurrency] = useState("USD");
   const [timezone, setTimezone] = useState("UTC");
@@ -77,12 +81,25 @@ export default function SettingsPage() {
         setCompanyEmail(settings.companyEmail ?? "");
         setCurrency(settings.currency);
         setTimezone(settings.timezone);
-        saveCompanyProfile(settings.companyName, settings.companyEmail ?? "");
+        const local = loadCompanyProfile();
+        saveCompanyProfile({
+          name: settings.companyName,
+          email: settings.companyEmail ?? "",
+          phone: local.phone,
+          address: local.address,
+          taxId: local.taxId,
+        });
+        setCompanyPhone(local.phone);
+        setCompanyAddress(local.address);
+        setCompanyTaxId(local.taxId);
       })
       .catch(() => {
         const profile = loadCompanyProfile();
         setCompanyName(profile.name);
         setCompanyEmail(profile.email);
+        setCompanyPhone(profile.phone);
+        setCompanyAddress(profile.address);
+        setCompanyTaxId(profile.taxId);
       });
 
     getNotifications()
@@ -116,7 +133,13 @@ export default function SettingsPage() {
         currency,
         timezone,
       });
-      saveCompanyProfile(companyName, companyEmail);
+      saveCompanyProfile({
+        name: companyName,
+        email: companyEmail,
+        phone: companyPhone,
+        address: companyAddress,
+        taxId: companyTaxId,
+      });
       saveCompanyLogo(companyLogo);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -301,6 +324,42 @@ export default function SettingsPage() {
                       className="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-navy text-sm focus:border-navy focus:ring-2 focus:ring-navy/10 outline-none transition-all"
                     />
                   </div>
+                  <div>
+                    <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+                      Phone
+                    </label>
+                    <input
+                      type="tel"
+                      value={companyPhone}
+                      onChange={(e) => setCompanyPhone(e.target.value)}
+                      placeholder="+1 (415) 555-0142"
+                      className="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-navy text-sm focus:border-navy focus:ring-2 focus:ring-navy/10 outline-none transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+                      Tax ID / VAT
+                    </label>
+                    <input
+                      type="text"
+                      value={companyTaxId}
+                      onChange={(e) => setCompanyTaxId(e.target.value)}
+                      placeholder="VAT · US-884422"
+                      className="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-navy text-sm focus:border-navy focus:ring-2 focus:ring-navy/10 outline-none transition-all"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+                      Company Address
+                    </label>
+                    <input
+                      type="text"
+                      value={companyAddress}
+                      onChange={(e) => setCompanyAddress(e.target.value)}
+                      placeholder="88 Market St, San Francisco, CA"
+                      className="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-navy text-sm focus:border-navy focus:ring-2 focus:ring-navy/10 outline-none transition-all"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -318,10 +377,11 @@ export default function SettingsPage() {
                       onChange={(e) => setCurrency(e.target.value)}
                       className="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-navy text-sm focus:border-navy focus:ring-2 focus:ring-navy/10 outline-none transition-all appearance-none"
                     >
-                      <option value="USD">USD ($)</option>
-                      <option value="EUR">EUR (&euro;)</option>
-                      <option value="GBP">GBP (&pound;)</option>
-                      <option value="NGN">NGN (&#8358;)</option>
+                      {CURRENCIES.map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {c.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div>

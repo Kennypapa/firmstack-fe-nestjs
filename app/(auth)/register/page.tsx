@@ -94,7 +94,7 @@ export default function RegisterPage() {
         </p>
       </div>
 
-      {/* Social login */}
+      
       <div className="grid grid-cols-2 gap-3 mb-8">
         <button
           type="button"
@@ -136,7 +136,7 @@ export default function RegisterPage() {
             {error}
           </div>
         )}
-        {/* Workspace type toggle */}
+        
         <div>
           <label className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">
             I want to use Firmstack as
@@ -169,7 +169,7 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        {/* Company name — floating label */}
+        
         {workspaceType === "company" && (
           <div className="relative">
             <input
@@ -196,7 +196,7 @@ export default function RegisterPage() {
           </div>
         )}
 
-        {/* Email — floating label */}
+        
         <div className="relative">
           <input
             type="email"
@@ -222,7 +222,7 @@ export default function RegisterPage() {
           <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-navy transition-all duration-300 ${focusedField === "email" ? "w-[calc(100%-2rem)]" : "w-0"}`} />
         </div>
 
-        {/* Password — floating label */}
+        
         <div className="relative">
           <input
             type={showPassword ? "text" : "password"}
@@ -256,7 +256,7 @@ export default function RegisterPage() {
           <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-navy transition-all duration-300 ${focusedField === "password" ? "w-[calc(100%-2rem)]" : "w-0"}`} />
         </div>
 
-        {/* Password strength indicators */}
+        
         <div className="grid grid-cols-5 gap-1.5">
           {passwordRules.map((rule) => {
             const passes = rule.regex.test(form.password);
@@ -293,7 +293,7 @@ export default function RegisterPage() {
           })}
         </ul>
 
-        {/* Terms checkbox */}
+        
         <label className="flex items-start gap-3 cursor-pointer group pt-1">
           <div className="relative w-5 h-5 mt-0.5">
             <input
@@ -324,13 +324,12 @@ export default function RegisterPage() {
           </span>
         </label>
 
-        {/* Submit */}
+        
         <button
           type="submit"
           disabled={loading}
-          className="group relative w-full flex items-center justify-center gap-2 h-14 rounded-2xl bg-navy text-white font-semibold text-[15px] overflow-hidden transition-all hover:shadow-lg hover:shadow-navy/20 active:scale-[0.98] disabled:opacity-60"
+          className="group relative w-full flex items-center justify-center gap-2 h-14 fs-btn-navy-shimmer rounded-full text-white font-semibold text-[15px] shadow-lg shadow-navy/25 transition hover:brightness-105 active:scale-[0.98] disabled:opacity-60"
         >
-          <span className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <span className="relative flex items-center gap-2">
             {loading ? "Creating account..." : "Create account"}
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

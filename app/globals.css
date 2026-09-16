@@ -111,3 +111,455 @@ body {
     animation: none;
   }
 }
+
+/* —— Landing v2 (2026 glass) —— */
+:root {
+  --fs-navy: #222e4d;
+  --fs-primary: #3388ff;
+  --fs-primary-light: #7bbfff;
+  --fs-mist: #e8eef8;
+  --fs-ice: #f4f7fb;
+  --hero-gradient-a: linear-gradient(
+    135deg,
+    #f4f7fb 0%,
+    #e8eef8 42%,
+    rgba(123, 191, 255, 0.28) 72%,
+    rgba(51, 136, 255, 0.18) 100%
+  );
+  --hero-gradient-c: linear-gradient(
+    145deg,
+    #1a243d 0%,
+    #222e4d 45%,
+    #2a4a7a 78%,
+    #3388ff 100%
+  );
+}
+
+@keyframes lv2-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes lv2-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate(4px, -6px) rotate(2deg);
+  }
+}
+
+@keyframes lv2-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes lv2-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.lv2-float {
+  animation: lv2-float 5s ease-in-out infinite;
+}
+
+.lv2-drift {
+  animation: lv2-drift 7s ease-in-out infinite;
+}
+
+.lv2-shimmer-btn {
+  background-image: linear-gradient(
+    110deg,
+    #3388ff 0%,
+    #3388ff 40%,
+    #7bbfff 50%,
+    #3388ff 60%,
+    #3388ff 100%
+  );
+  background-size: 200% 100%;
+}
+
+.lv2-shimmer-btn:hover {
+  animation: lv2-shimmer 1.2s linear infinite;
+}
+
+/* Auth only — same structure as .lv2-shimmer-btn, deep navy colors only */
+.fs-btn-navy-shimmer {
+  background-image: linear-gradient(
+    110deg,
+    #222e4d 0%,
+    #222e4d 40%,
+    #3a4666 50%,
+    #222e4d 60%,
+    #222e4d 100%
+  );
+  background-size: 200% 100%;
+}
+
+.fs-btn-navy-shimmer:hover {
+  animation: lv2-shimmer 1.2s linear 1;
+}
+
+.lv2-marquee-track {
+  animation: lv2-marquee 40s linear infinite;
+}
+
+@keyframes hero-sign-draw {
+  0% {
+    stroke-dashoffset: 220;
+    opacity: 0.2;
+  }
+  12% {
+    opacity: 1;
+  }
+  55% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  72% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 220;
+    opacity: 0.2;
+  }
+}
+
+.hero-sign-path {
+  stroke-dasharray: 220;
+  stroke-dashoffset: 220;
+  animation: hero-sign-draw 3.8s ease-in-out infinite;
+}
+
+/* Pen tip rides the same signature path / timing */
+.hero-pen-rider {
+  offset-path: path(
+    "M 8 32 C 28 8, 42 40, 58 24 S 88 6, 102 28 S 130 44, 152 18"
+  );
+  offset-rotate: 0deg;
+  offset-anchor: center;
+  animation: hero-pen-write 3.8s ease-in-out infinite;
+  width: 2px;
+  height: 2px;
+}
+
+@keyframes hero-pen-write {
+  0% {
+    offset-distance: 0%;
+    opacity: 0.85;
+  }
+  12% {
+    opacity: 1;
+  }
+  55% {
+    offset-distance: 100%;
+    opacity: 1;
+  }
+  72% {
+    offset-distance: 100%;
+    opacity: 1;
+  }
+  100% {
+    offset-distance: 0%;
+    opacity: 0.85;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-sign-path {
+    animation: none;
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  .hero-pen-rider {
+    animation: none;
+    offset-distance: 70%;
+  }
+}
+
+.lv2-logo-mask {
+  mask-image: linear-gradient(
+    90deg,
+    transparent,
+    black 8%,
+    black 92%,
+    transparent
+  );
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent,
+    black 8%,
+    black 92%,
+    transparent
+  );
+}
+
+.lv2-logo-track {
+  animation: lv2-logo-left linear infinite;
+}
+
+.lv2-logo-track-reverse {
+  animation-name: lv2-logo-right;
+}
+
+@keyframes lv2-logo-left {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes lv2-logo-right {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lv2-float,
+  .lv2-drift,
+  .lv2-shimmer-btn:hover,
+  .fs-btn-navy-shimmer:hover,
+  .lv2-marquee-track,
+  .lv2-logo-track,
+  .lv2-logo-track-reverse {
+    animation: none;
+  }
+  .hero-sign-path {
+    animation: none;
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  .lv2-logo-track-reverse {
+    transform: none;
+  }
+}
+
+/* Soft dashboard skeleton — gentle pulse, no harsh flash */
+.skeleton-soft {
+  background: rgba(34, 46, 77, 0.055);
+  animation: skeleton-soft-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes skeleton-soft-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@keyframes fs-slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+/* Invoice date range picker — readable + no overflow */
+.firmstack-date-picker {
+  color: #222e4d;
+  overflow: hidden !important;
+}
+
+.firmstack-date-picker .rdrDateRangePickerWrapper {
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+.firmstack-date-picker .rdrCalendarWrapper {
+  color: #222e4d;
+}
+
+.firmstack-date-picker .rdrDayNumber span {
+  color: #222e4d !important;
+  font-weight: 600;
+  opacity: 1 !important;
+}
+
+.firmstack-date-picker .rdrDayPassive .rdrDayNumber span {
+  color: rgba(34, 46, 77, 0.4) !important;
+  font-weight: 500;
+}
+
+.firmstack-date-picker
+  .rdrDay:not(.rdrDayPassive)
+  .rdrInRange
+  ~ .rdrDayNumber
+  span,
+.firmstack-date-picker
+  .rdrDay:not(.rdrDayPassive)
+  .rdrStartEdge
+  ~ .rdrDayNumber
+  span,
+.firmstack-date-picker
+  .rdrDay:not(.rdrDayPassive)
+  .rdrEndEdge
+  ~ .rdrDayNumber
+  span,
+.firmstack-date-picker
+  .rdrDay:not(.rdrDayPassive)
+  .rdrSelected
+  ~ .rdrDayNumber
+  span {
+  color: #fff !important;
+}
+
+.firmstack-date-picker .rdrMonthName,
+.firmstack-date-picker .rdrWeekDay {
+  color: #222e4d !important;
+  font-weight: 600;
+  opacity: 1 !important;
+}
+
+.firmstack-date-picker .rdrStaticRangeLabel,
+.firmstack-date-picker .rdrInputRange span {
+  color: #222e4d !important;
+  font-weight: 600;
+  opacity: 1 !important;
+}
+
+.firmstack-date-picker .rdrStaticRange:hover .rdrStaticRangeLabel,
+.firmstack-date-picker .rdrStaticRange:focus .rdrStaticRangeLabel {
+  background: #eef1f6 !important;
+  color: #222e4d !important;
+}
+
+.firmstack-date-picker .rdrStaticRangeSelected .rdrStaticRangeLabel {
+  color: #222e4d !important;
+  font-weight: 700;
+}
+
+.firmstack-date-picker .rdrInputRangeInput {
+  color: #222e4d !important;
+  border-color: #d5dae3 !important;
+}
+
+.firmstack-date-picker .rdrDefinedRangesWrapper {
+  background: #f8f9fb;
+  border-right-color: #e5e8ef;
+  flex-shrink: 0;
+}
+
+.firmstack-date-picker--no-ranges .rdrDefinedRangesWrapper {
+  display: none !important;
+}
+
+@media (max-width: 640px) {
+  .firmstack-date-picker .rdrMonth {
+    padding: 0 0.6em 1em 0.6em;
+  }
+
+  .firmstack-date-picker .rdrMonthAndYearWrapper {
+    padding-top: 8px;
+    height: 48px;
+  }
+}
+
+.firmstack-tour-popover {
+  font-family: Onest, system-ui, sans-serif;
+  border-radius: 14px !important;
+  box-shadow: 0 16px 40px rgba(34, 46, 77, 0.18) !important;
+}
+
+.firmstack-tour-popover .driver-popover-title {
+  font-size: 15px;
+  font-weight: 650;
+  color: #222e4d;
+}
+
+.firmstack-tour-popover .driver-popover-description {
+  font-size: 13px;
+  color: rgba(34, 46, 77, 0.7);
+  line-height: 1.45;
+}
+
+.firmstack-tour-popover .driver-popover-footer {
+  align-items: center !important;
+  margin-top: 14px !important;
+}
+
+.firmstack-tour-popover .driver-popover-progress-text {
+  color: rgba(34, 46, 77, 0.45) !important;
+  font-size: 12px !important;
+}
+
+.firmstack-tour-popover .driver-popover-navigation-btns {
+  gap: 8px !important;
+}
+
+.firmstack-tour-popover .driver-popover-prev-btn {
+  background: #fff !important;
+  color: #222e4d !important;
+  border: 1px solid #d5dae3 !important;
+  border-radius: 10px !important;
+  text-shadow: none !important;
+  font-weight: 600 !important;
+  padding: 7px 14px !important;
+  box-shadow: none !important;
+}
+
+.firmstack-tour-popover .driver-popover-prev-btn:hover {
+  background: #f5f7fa !important;
+}
+
+.firmstack-tour-popover .driver-popover-next-btn,
+.firmstack-tour-popover .driver-popover-done-btn {
+  background: #222e4d !important;
+  color: #fff !important;
+  border: 1px solid #222e4d !important;
+  border-radius: 9999px !important;
+  text-shadow: none !important;
+  font-weight: 600 !important;
+  padding: 7px 16px !important;
+  box-shadow: none !important;
+}
+
+.firmstack-tour-popover .driver-popover-next-btn:hover,
+.firmstack-tour-popover .driver-popover-done-btn:hover {
+  background: #1a243d !important;
+}
+
+.firmstack-tour-popover .driver-popover-close-btn {
+  display: none !important;
+}
+
+/* Expense notebook writing caret */
+@keyframes notebook-caret-blink {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.notebook-caret {
+  animation: notebook-caret-blink 1.05s steps(1, end) infinite;
+}
+

@@ -1,0 +1,54 @@
+/* Firmstack Hero gradient system — navy / primary blue family */
+
+:root {
+  /* Brand anchors */
+  --fs-navy: #222e4d;
+  --fs-primary: #3388ff;
+  --fs-primary-light: #7bbfff;
+  --fs-mist: #e8eef8;
+  --fs-ice: #f4f7fb;
+
+  /* Hero A — recommended: soft mist wash (ResumeGenius-like, Firmstack colors) */
+  --hero-gradient-a: linear-gradient(
+    135deg,
+    #f4f7fb 0%,
+    #e8eef8 42%,
+    rgba(123, 191, 255, 0.28) 72%,
+    rgba(51, 136, 255, 0.18) 100%
+  );
+
+  /* Hero B — split glow: ice left, soft primary bloom right */
+  --hero-gradient-b: radial-gradient(
+      900px 520px at 12% 18%,
+      rgba(123, 191, 255, 0.35),
+      transparent 60%
+    ),
+    radial-gradient(
+      700px 480px at 88% 30%,
+      rgba(51, 136, 255, 0.22),
+      transparent 55%
+    ),
+    linear-gradient(180deg, #ffffff 0%, #f4f7fb 100%);
+
+  /* Hero C — premium navy depth (use with light text or overlay cards) */
+  --hero-gradient-c: linear-gradient(
+    145deg,
+    #1a243d 0%,
+    #222e4d 45%,
+    #2a4a7a 78%,
+    #3388ff 100%
+  );
+
+  /* Hero D — grid wash companion (pair with CSS grid pattern) */
+  --hero-gradient-d: linear-gradient(
+    160deg,
+    #ffffff 0%,
+    #eef3fa 50%,
+    #dbe8ff 100%
+  );
+
+  /* Accent blob helper */
+  --hero-blob-primary: rgba(51, 136, 255, 0.22);
+  --hero-blob-light: rgba(123, 191, 255, 0.28);
+  --hero-blob-navy: rgba(34, 46, 77, 0.12);
+}

@@ -3,8 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  TrendingUp,
-  TrendingDown,
   DollarSign,
   FileText,
   ArrowUpRight,
@@ -52,6 +50,64 @@ function CustomTooltip({ active, payload, label }: any) {
           </span>
         </div>
       ))}
+    </div>
+  );
+}
+
+function EmptyFolderIcon({ className = "w-14 h-14" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 64 56"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden
+    >
+      <path
+        d="M6 18.5C6 16.015 8.015 14 10.5 14H24.2c.8 0 1.55.38 2.02 1.02L28.5 18H53.5C55.985 18 58 20.015 58 22.5V46c0 2.485-2.015 4.5-4.5 4.5H10.5C8.015 50.5 6 48.485 6 46V18.5Z"
+        stroke="#222e4d"
+        strokeWidth="2.4"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M6 22.5H58"
+        stroke="#222e4d"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+      />
+      <path
+        d="M24 30.5L28.5 35M28.5 30.5L24 35"
+        stroke="#222e4d"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M35.5 30.5L40 35M40 30.5L35.5 35"
+        stroke="#222e4d"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M27 41c2.2-2.4 7.8-2.4 10 0"
+        stroke="#222e4d"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M50 8.5l2.2-3.2M54.5 11l3.5-1.2M53 15.5l3.2 1.8"
+        stroke="#222e4d"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-2.5 py-8 text-center">
+      <EmptyFolderIcon />
+      <p className="text-sm font-medium text-navy/70">{message}</p>
     </div>
   );
 }
@@ -114,13 +170,50 @@ function WidgetShell({
 
 type MetricCardType = MetricCard;
 
-function MetricCardWidget({ card }: { card: MetricCardType }) {
+const metricIconBg: Record<string, string> = {
+  "Total Revenue": "bg-emerald-600",
+  "Total Expenses": "bg-navy",
+  "Net Profit": "bg-sky-500",
+  "Total Invoices": "bg-amber-500",
+};
+
+const metricDecorStroke: Record<string, string> = {
+  "Total Revenue": "stroke-emerald-500/20",
+  "Total Expenses": "stroke-navy/15",
+  "Net Profit": "stroke-sky-500/20",
+  "Total Invoices": "stroke-amber-500/20",
+};
+
+function MetricCardWidget({
+  card,
+  withCurves = false,
+}: {
+  card: MetricCardType;
+  withCurves?: boolean;
+}) {
   return (
     <WidgetShell compactHandle>
-      <div className="p-4 sm:p-5 h-full flex flex-col justify-between hover:shadow-md hover:shadow-gray-100 transition-all">
-        <div className="flex items-start justify-between gap-2">
-          <div className={`p-2 rounded-xl ${card.bg}`}>
-            <card.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${card.color}`} />
+      <div className="relative p-4 sm:p-5 h-full flex flex-col justify-between overflow-hidden hover:shadow-md hover:shadow-gray-100 transition-all">
+        {withCurves && (
+          <svg
+            aria-hidden
+            className={`pointer-events-none absolute -right-6 -top-8 h-28 w-28 sm:h-32 sm:w-32 ${
+              metricDecorStroke[card.label] ?? "stroke-navy/10"
+            }`}
+            viewBox="0 0 120 120"
+            fill="none"
+          >
+            <circle cx="90" cy="30" r="42" strokeWidth="10" />
+            <circle cx="90" cy="30" r="62" strokeWidth="8" />
+          </svg>
+        )}
+        <div className="relative z-10 flex items-start justify-between gap-2">
+          <div
+            className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0 ${
+              metricIconBg[card.label] ?? "bg-navy"
+            }`}
+          >
+            <card.icon className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-white" strokeWidth={2} />
           </div>
           <span
             className={`inline-flex items-center gap-0.5 text-[11px] sm:text-xs font-semibold px-1.5 sm:px-2 py-0.5 rounded-full shrink-0 ${card.changeBg}`}
@@ -129,7 +222,7 @@ function MetricCardWidget({ card }: { card: MetricCardType }) {
             {card.change}
           </span>
         </div>
-        <div>
+        <div className="relative z-10">
           <p className="text-xs sm:text-sm text-muted-foreground font-medium">
             {card.label}
           </p>
@@ -144,27 +237,28 @@ function MetricCardWidget({ card }: { card: MetricCardType }) {
 
 export function TotalRevenueWidget() {
   const card = useDashboardDataStore((s) => s.summaryCards[0]);
-  return <MetricCardWidget card={card} />;
+  return <MetricCardWidget card={card} withCurves />;
 }
 
 export function TotalExpensesWidget() {
   const card = useDashboardDataStore((s) => s.summaryCards[1]);
-  return <MetricCardWidget card={card} />;
+  return <MetricCardWidget card={card} withCurves />;
 }
 
 export function NetProfitWidget() {
   const card = useDashboardDataStore((s) => s.summaryCards[2]);
-  return <MetricCardWidget card={card} />;
+  return <MetricCardWidget card={card} withCurves />;
 }
 
 export function TotalInvoicesWidget() {
   const card = useDashboardDataStore((s) => s.summaryCards[3]);
-  return <MetricCardWidget card={card} />;
+  return <MetricCardWidget card={card} withCurves />;
 }
 
 export function RevenueChartWidget() {
   const chartData = useDashboardDataStore((s) => s.chartData);
   const [chartView, setChartView] = useState<"bar" | "area">("bar");
+  const hasData = chartData.some((d) => d.revenue > 0 || d.expenses > 0);
 
   return (
     <WidgetShell>
@@ -201,59 +295,65 @@ export function RevenueChartWidget() {
             </button>
           </div>
         </div>
-        <div className="flex-1 min-h-[180px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            {chartView === "bar" ? (
-              <BarChart data={chartData} barGap={4}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-                <XAxis
-                  dataKey="name"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "#9ca3af", fontSize: 12 }}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "#9ca3af", fontSize: 12 }}
-                  tickFormatter={(v) => `${v / 1000}k`}
-                />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(0,0,0,0.02)" }} />
-                <Bar dataKey="revenue" fill="#222e4d" name="Revenue" radius={[6, 6, 0, 0]} maxBarSize={32} />
-                <Bar dataKey="expenses" fill="#f59e0b" name="Expenses" radius={[6, 6, 0, 0]} maxBarSize={32} />
-              </BarChart>
-            ) : (
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#222e4d" stopOpacity={0.15} />
-                    <stop offset="100%" stopColor="#222e4d" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="expGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.15} />
-                    <stop offset="100%" stopColor="#f59e0b" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "#9ca3af", fontSize: 12 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: "#9ca3af", fontSize: 12 }} tickFormatter={(v) => `${v / 1000}k`} />
-                <Tooltip content={<CustomTooltip />} />
-                <Area type="monotone" dataKey="revenue" stroke="#222e4d" strokeWidth={2} fill="url(#revGrad)" name="Revenue" />
-                <Area type="monotone" dataKey="expenses" stroke="#f59e0b" strokeWidth={2} fill="url(#expGrad)" name="Expenses" />
-              </AreaChart>
-            )}
-          </ResponsiveContainer>
+        <div className="flex-1 min-h-[180px] w-full flex items-center justify-center">
+          {!hasData ? (
+            <EmptyState message="No record yet" />
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              {chartView === "bar" ? (
+                <BarChart data={chartData} barGap={4}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: "#9ca3af", fontSize: 12 }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: "#9ca3af", fontSize: 12 }}
+                    tickFormatter={(v) => `${v / 1000}k`}
+                  />
+                  <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(0,0,0,0.02)" }} />
+                  <Bar dataKey="revenue" fill="#222e4d" name="Revenue" radius={[6, 6, 0, 0]} maxBarSize={32} />
+                  <Bar dataKey="expenses" fill="#f59e0b" name="Expenses" radius={[6, 6, 0, 0]} maxBarSize={32} />
+                </BarChart>
+              ) : (
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#222e4d" stopOpacity={0.15} />
+                      <stop offset="100%" stopColor="#222e4d" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="expGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.15} />
+                      <stop offset="100%" stopColor="#f59e0b" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "#9ca3af", fontSize: 12 }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: "#9ca3af", fontSize: 12 }} tickFormatter={(v) => `${v / 1000}k`} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area type="monotone" dataKey="revenue" stroke="#222e4d" strokeWidth={2} fill="url(#revGrad)" name="Revenue" />
+                  <Area type="monotone" dataKey="expenses" stroke="#f59e0b" strokeWidth={2} fill="url(#expGrad)" name="Expenses" />
+                </AreaChart>
+              )}
+            </ResponsiveContainer>
+          )}
         </div>
-        <div className="flex items-center gap-5 mt-3 pt-3 border-t border-gray-100 shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-sm bg-navy" />
-            <span className="text-xs text-muted-foreground">Revenue</span>
+        {hasData && (
+          <div className="flex items-center gap-5 mt-3 pt-3 border-t border-gray-100 shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-sm bg-navy" />
+              <span className="text-xs text-muted-foreground">Revenue</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-sm bg-amber-500" />
+              <span className="text-xs text-muted-foreground">Expenses</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-sm bg-amber-500" />
-            <span className="text-xs text-muted-foreground">Expenses</span>
-          </div>
-        </div>
+        )}
       </div>
     </WidgetShell>
   );
@@ -332,8 +432,10 @@ export function QuickActionsWidget() {
 
   return (
     <WidgetShell compactHandle>
-      <div className="p-3 sm:p-4 h-full flex flex-col">
-        <h3 className="text-sm font-semibold text-navy mb-2 shrink-0">Quick Actions</h3>
+      <div id="tour-quick-actions" className="flex h-full flex-col p-3 sm:p-4">
+        <h3 className="mb-2 shrink-0 text-sm font-semibold text-navy">
+          Quick Actions
+        </h3>
         <div className="grid grid-cols-2 gap-2 flex-1 min-h-0 content-start">
           {actions.map((action) => (
             <Link
@@ -373,10 +475,10 @@ export function RecentActivityWidget() {
           <h2 className="text-[15px] font-semibold text-navy">Recent Activity</h2>
           <span className="text-xs font-medium text-muted-foreground">Latest</span>
         </div>
+        {recentActivity.length === 0 ? (
+          <EmptyState message="No activity yet." />
+        ) : (
         <ul className="space-y-5">
-          {recentActivity.length === 0 && (
-            <li className="text-sm text-muted-foreground">No activity yet.</li>
-          )}
           {recentActivity.map((item, i) => (
             <li key={i} className="flex gap-3">
               <div className="relative mt-1.5">
@@ -402,6 +504,7 @@ export function RecentActivityWidget() {
             </li>
           ))}
         </ul>
+        )}
       </div>
     </WidgetShell>
   );
@@ -419,8 +522,8 @@ export function RecentInvoicesWidget() {
           View all <ArrowRight className="w-3 h-3" />
         </Link>
       </div>
-      <div className="px-4 sm:px-5 pb-4 space-y-2">
-        <p className="text-sm text-muted-foreground py-4">Open invoices to see recent activity here.</p>
+      <div className="px-4 sm:px-5 pb-4">
+        <EmptyState message="No record yet" />
       </div>
     </WidgetShell>
   );
@@ -438,8 +541,8 @@ export function RecentExpensesWidget() {
           View all <ArrowRight className="w-3 h-3" />
         </Link>
       </div>
-      <div className="px-4 sm:px-5 pb-4 space-y-2">
-        <p className="text-sm text-muted-foreground py-4">Open expenses to see recent activity here.</p>
+      <div className="px-4 sm:px-5 pb-4">
+        <EmptyState message="No record yet" />
       </div>
     </WidgetShell>
   );

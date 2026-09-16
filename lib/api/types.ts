@@ -7,6 +7,7 @@ export interface UserProfile {
   firstName: string | null;
   lastName: string | null;
   emailVerified: boolean;
+  dashboardTourSeen?: boolean;
 }
 
 export interface WorkspaceSummary {
@@ -72,6 +73,8 @@ export interface ExpenseItem {
   amount: number;
   addedBy: string;
   status: string;
+  merchant?: string | null;
+  paymentMethod?: string | null;
   receiptUrl?: string | null;
 }
 
@@ -84,4 +87,15 @@ export interface TeamMember {
   addedOn: string;
   avatar?: string | null;
   isOwner?: boolean;
+}
+
+export interface ClientItem {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  company?: string | null;
+  address?: string | null;
+  notes?: string | null;
+  createdAt: string;
 }

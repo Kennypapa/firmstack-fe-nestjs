@@ -59,6 +59,9 @@ export default function InvoiceDetailPage() {
 
   const [companyName, setCompanyName] = useState("Firmstack");
   const [companyEmail, setCompanyEmail] = useState("invoices@firmstack.com");
+  const [companyPhone, setCompanyPhone] = useState("");
+  const [companyAddress, setCompanyAddress] = useState("");
+  const [companyTaxId, setCompanyTaxId] = useState("");
   const [companyLogo, setCompanyLogo] = useState<string | null>(null);
   const [templateId, setTemplateId] = useState("modern-blue");
 
@@ -66,6 +69,9 @@ export default function InvoiceDetailPage() {
     const profile = loadCompanyProfile();
     setCompanyName(profile.name);
     setCompanyEmail(profile.email);
+    setCompanyPhone(profile.phone);
+    setCompanyAddress(profile.address);
+    setCompanyTaxId(profile.taxId);
     setCompanyLogo(loadCompanyLogo());
     setTemplateId(loadTemplatePreference().templateId);
   }, []);
@@ -164,6 +170,9 @@ export default function InvoiceDetailPage() {
     () => ({
       companyName,
       companyEmail,
+      companyPhone: companyPhone || undefined,
+      companyAddress: companyAddress || undefined,
+      companyTaxId: companyTaxId || undefined,
       companyLogo,
       clientName: inv.client.name,
       clientEmail: inv.client.email,
@@ -180,7 +189,15 @@ export default function InvoiceDetailPage() {
       notes: inv.notes ?? "",
       formatAmount,
     }),
-    [companyName, companyEmail, companyLogo, inv]
+    [
+      companyName,
+      companyEmail,
+      companyPhone,
+      companyAddress,
+      companyTaxId,
+      companyLogo,
+      inv,
+    ]
   );
 
   return (

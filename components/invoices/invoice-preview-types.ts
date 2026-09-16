@@ -8,13 +8,18 @@ export interface InvoiceLineItem {
 export interface InvoiceDocumentData {
   companyName?: string;
   companyEmail?: string;
+  companyPhone?: string;
+  companyAddress?: string;
+  companyTaxId?: string;
   companyLogo?: string | null;
   clientName: string;
   clientEmail: string;
   clientAddress?: string;
+  clientCompany?: string;
   invoiceDate: string;
   dueDate: string;
   invoiceNumber: string;
+  poNumber?: string;
   lineItems: InvoiceLineItem[];
   subtotal: number;
   taxPercent: number;
@@ -22,6 +27,9 @@ export interface InvoiceDocumentData {
   discountAmount: number;
   grandTotal: number;
   notes: string;
+  paymentTerms?: string;
+  /** Bank details / how to pay */
+  paymentInstructions?: string;
   formatAmount: (val: number) => string;
   /** Drawn signature as a data URL (PNG) */
   signatureImage?: string | null;
@@ -31,10 +39,11 @@ export interface InvoiceDocumentData {
 }
 
 const galleryLineItems: InvoiceLineItem[] = [
-  { id: "1", description: "Consulting (10 hrs)", quantity: 10, unitPrice: 200 },
-  { id: "2", description: "Software license", quantity: 1, unitPrice: 2200 },
-  { id: "3", description: "API integration", quantity: 8, unitPrice: 220 },
-  { id: "4", description: "Travel & expenses", quantity: 1, unitPrice: 384.5 },
+  { id: "1", description: "Consulting (10 hrs)", quantity: 10, unitPrice: 150 },
+  { id: "2", description: "Software license", quantity: 1, unitPrice: 2400 },
+  { id: "3", description: "API integration", quantity: 1, unitPrice: 1850 },
+  { id: "4", description: "Travel & expenses", quantity: 1, unitPrice: 494.5 },
+  { id: "5", description: "Support retainer", quantity: 1, unitPrice: 600 },
 ];
 
 const gallerySubtotal = galleryLineItems.reduce(
@@ -52,51 +61,34 @@ const formatUsd = (val: number) =>
 export const GALLERY_INVOICE_DATA: InvoiceDocumentData = {
   companyName: "Firmstack",
   companyEmail: "invoices@firmstack.com",
+  companyPhone: "+1 (415) 555-0142",
+  companyAddress: "88 Market St, San Francisco, CA",
+  companyTaxId: "VAT · US-884422",
   clientName: "Acme Corp",
   clientEmail: "billing@acme.com",
-  clientAddress: "123 Business St, NY",
+  clientAddress: "123 Business St, New York, NY",
   invoiceDate: "2026-03-01",
   dueDate: "2026-03-20",
   invoiceNumber: "INV-028",
+  poNumber: "PO-4412",
   lineItems: galleryLineItems,
   subtotal: gallerySubtotal,
   taxPercent: 0,
   tax: 0,
   discountAmount: 0,
   grandTotal: gallerySubtotal,
-  notes: "Payment due within 20 days.",
+  notes: "Thank you for your business.",
+  paymentTerms: "Payment due within 20 days.",
+  paymentInstructions: "Bank transfer · Acct 8821993 · Firmstack Inc",
   formatAmount: formatUsd,
+  signerName: "Alex Morgan",
+  signerTitle: "Founder",
 };
 
 /** Sample data for template gallery cards */
 export const SAMPLE_INVOICE_DATA: InvoiceDocumentData = {
-  companyName: "Firmstack",
-  companyEmail: "invoices@firmstack.com",
-  clientName: "Acme Corp",
-  clientEmail: "billing@acme.com",
-  clientAddress: "123 Business St, NY",
-  invoiceDate: "2026-03-01",
-  dueDate: "2026-03-20",
-  invoiceNumber: "INV-028",
-  lineItems: [
-    {
-      id: "1",
-      description: "Consulting services",
-      quantity: 10,
-      unitPrice: 200,
-    },
-    {
-      id: "2",
-      description: "Software license",
-      quantity: 1,
-      unitPrice: 220,
-    },
-  ],
-  subtotal: 2220,
-  taxPercent: 0,
-  tax: 0,
-  discountAmount: 0,
-  grandTotal: 2220,
-  notes: "Payment is due within 20 days. Thank you.",
-  formatAmount: formatUsd,
+  ...GALLERY_INVOICE_DATA,
+  lineItems: galleryLineItems.slice(0, 2),
+  subtotal: 3900,
+  grandTotal: 3900,
 };

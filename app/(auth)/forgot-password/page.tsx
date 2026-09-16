@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AuthLayout } from "@/components/auth/AuthLayout";
-import { ArrowRight, ArrowLeft, CheckCircle, Mail } from "lucide-react";
+import { ArrowRight, ArrowLeft, Mail } from "lucide-react";
 
 import { forgotPassword } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
@@ -42,26 +42,18 @@ export default function ForgotPasswordPage() {
           <h1 className="mt-6 text-2xl font-bold text-navy tracking-tight">
             Check your email
           </h1>
-          <p className="mt-3 text-muted-foreground text-[15px] leading-relaxed max-w-sm mx-auto">
-            We&apos;ve sent a password reset link to{" "}
-            <strong className="text-navy">{email}</strong>. Click the link to set
-            a new password.
-          </p>
-          <div className="mt-2 text-sm text-muted-foreground">
-            Didn&apos;t get it?{" "}
-            <button
-              type="button"
-              onClick={() => setSubmitted(false)}
-              className="font-medium text-primary hover:text-primary/80 transition-colors"
-            >
-              Try again
-            </button>
-          </div>
+          <p className="mt-3 text-[15px] font-medium text-navy">{email}</p>
+          <button
+            type="button"
+            onClick={() => setSubmitted(false)}
+            className="mt-3 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+          >
+            Try again
+          </button>
           <Link
             href="/login"
-            className="group mt-8 relative w-full flex items-center justify-center gap-2 h-14 rounded-2xl bg-navy text-white font-semibold text-[15px] overflow-hidden transition-all hover:shadow-lg hover:shadow-navy/20 active:scale-[0.98]"
+            className="group mt-8 relative w-full flex items-center justify-center gap-2 h-14 fs-btn-navy-shimmer rounded-full text-white font-semibold text-[15px] shadow-lg shadow-navy/25 transition hover:brightness-105 active:scale-[0.98]"
           >
-            <span className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <span className="relative flex items-center gap-2">
               Back to login
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -85,7 +77,7 @@ export default function ForgotPasswordPage() {
                 {error}
               </div>
             )}
-            {/* Email — floating label */}
+            
             <div className="relative">
               <input
                 type="email"
@@ -118,9 +110,8 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex items-center justify-center gap-2 h-14 rounded-2xl bg-navy text-white font-semibold text-[15px] overflow-hidden transition-all hover:shadow-lg hover:shadow-navy/20 active:scale-[0.98] disabled:opacity-60"
+              className="group relative w-full flex items-center justify-center gap-2 h-14 fs-btn-navy-shimmer rounded-full text-white font-semibold text-[15px] shadow-lg shadow-navy/25 transition hover:brightness-105 active:scale-[0.98] disabled:opacity-60"
             >
-              <span className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <span className="relative flex items-center gap-2">
                 {loading ? "Sending..." : "Send reset link"}
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

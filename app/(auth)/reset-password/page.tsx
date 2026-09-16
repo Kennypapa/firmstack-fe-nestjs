@@ -44,9 +44,8 @@ export default function ResetPasswordPage() {
           </p>
           <Link
             href="/login"
-            className="group mt-8 relative w-full flex items-center justify-center gap-2 h-14 rounded-2xl bg-navy text-white font-semibold text-[15px] overflow-hidden transition-all hover:shadow-lg hover:shadow-navy/20 active:scale-[0.98]"
+            className="group mt-8 relative w-full flex items-center justify-center gap-2 h-14 fs-btn-navy-shimmer rounded-full text-white font-semibold text-[15px] shadow-lg shadow-navy/25 transition hover:brightness-105 active:scale-[0.98]"
           >
-            <span className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <span className="relative flex items-center gap-2">
               Go to login
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -69,7 +68,7 @@ export default function ResetPasswordPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-        {/* New password — floating label */}
+        
         <div className="relative">
           <input
             type={showPassword ? "text" : "password"}
@@ -103,7 +102,7 @@ export default function ResetPasswordPage() {
           <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-navy transition-all duration-300 ${focusedField === "password" ? "w-[calc(100%-2rem)]" : "w-0"}`} />
         </div>
 
-        {/* Confirm password — floating label */}
+        
         <div className="relative">
           <input
             type={showConfirm ? "text" : "password"}
@@ -137,7 +136,7 @@ export default function ResetPasswordPage() {
           <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-navy transition-all duration-300 ${focusedField === "confirm" ? "w-[calc(100%-2rem)]" : "w-0"}`} />
         </div>
 
-        {/* Password strength */}
+        
         <div className="grid grid-cols-5 gap-1.5">
           {passwordRules.map((rule) => {
             const passes = rule.regex.test(form.password);
@@ -172,9 +171,8 @@ export default function ResetPasswordPage() {
 
         <button
           type="submit"
-          className="group relative w-full flex items-center justify-center gap-2 h-14 rounded-2xl bg-navy text-white font-semibold text-[15px] overflow-hidden transition-all hover:shadow-lg hover:shadow-navy/20 active:scale-[0.98]"
+          className="group relative w-full flex items-center justify-center gap-2 h-14 fs-btn-navy-shimmer rounded-full text-white font-semibold text-[15px] shadow-lg shadow-navy/25 transition hover:brightness-105 active:scale-[0.98]"
         >
-          <span className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <span className="relative flex items-center gap-2">
             Reset password
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

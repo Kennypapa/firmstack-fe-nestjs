@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { DashboardTopbar } from "./DashboardTopbar";
+import { FirmstackMark } from "@/components/landing-v2/ui/FirmstackLogo";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useDashboardDataStore } from "@/stores/dashboard-data";
 
@@ -24,15 +25,14 @@ export function DashboardLayoutClient({
 
   if (!ready) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f0f2f6] text-navy">
-        Loading...
+      <div className="min-h-screen flex items-center justify-center bg-[#f0f2f6]">
+        <FirmstackMark className="h-20 w-20 sm:h-24 sm:w-24 animate-pulse" />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-[#f0f2f6] font-onest">
-      {/* Mobile overlay */}
       {mobileOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
@@ -47,7 +47,6 @@ export function DashboardLayoutClient({
         onMobileClose={() => setMobileOpen(false)}
       />
 
-      {/* Padding (not margin) so the content box never sits under the sidebar */}
       <div
         className={`min-h-screen flex flex-col relative z-0 transition-[padding] duration-200 ${
           sidebarCollapsed ? "lg:pl-[72px]" : "lg:pl-64"

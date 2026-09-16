@@ -40,21 +40,21 @@ export default function LoginPage() {
 
   return (
     <AuthLayout>
-      {/* Header */}
-      <div className="mb-10">
+      
+      <div className="mb-10 text-center">
         <h1 className="text-2xl sm:text-3xl font-bold text-navy tracking-tight">
-          Welcome back
+          Welcome back 👋
         </h1>
         <p className="mt-2 text-muted-foreground text-[15px]">
           Sign in to continue to your dashboard
         </p>
       </div>
 
-      {/* Social login options */}
-      <div className="grid grid-cols-2 gap-3 mb-8">
+      
+      <div className=" mb-8">
         <button
           type="button"
-          className="flex items-center justify-center gap-2.5 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-navy hover:bg-gray-50 hover:border-gray-300 transition-all"
+          className="flex items-center justify-center gap-2.5 rounded-xl border border-gray-200 bg-white w-full py-3 text-sm font-medium text-navy hover:bg-gray-50 hover:border-gray-300 transition-all"
         >
           <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
             <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4" />
@@ -64,18 +64,10 @@ export default function LoginPage() {
           </svg>
           Google
         </button>
-        <button
-          type="button"
-          className="flex items-center justify-center gap-2.5 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-navy hover:bg-gray-50 hover:border-gray-300 transition-all"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="#222e4d" aria-hidden>
-            <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
-          </svg>
-          GitHub
-        </button>
+        
       </div>
 
-      {/* Divider */}
+      
       <div className="relative mb-8">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-gray-200" />
@@ -87,7 +79,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Form */}
+      
       {error && (
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
@@ -95,7 +87,7 @@ export default function LoginPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-        {/* Email field — floating label style */}
+        
         <div className="relative group">
           <input
             type="email"
@@ -122,7 +114,7 @@ export default function LoginPage() {
           >
             Email address
           </label>
-          {/* Animated bottom accent */}
+          
           <div
             className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-navy transition-all duration-300 ${
               focusedField === "email" ? "w-[calc(100%-2rem)]" : "w-0"
@@ -130,7 +122,7 @@ export default function LoginPage() {
           />
         </div>
 
-        {/* Password field — floating label style */}
+        
         <div className="relative group">
           <input
             type={showPassword ? "text" : "password"}
@@ -157,7 +149,7 @@ export default function LoginPage() {
           >
             Password
           </label>
-          {/* Toggle visibility */}
+          
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
@@ -177,7 +169,7 @@ export default function LoginPage() {
           />
         </div>
 
-        {/* Remember me + forgot password */}
+        
         <div className="flex items-center justify-between pt-1">
           <label className="flex items-center gap-2.5 cursor-pointer group">
             <div className="relative w-5 h-5">
@@ -209,13 +201,12 @@ export default function LoginPage() {
           </Link>
         </div>
 
-        {/* Submit button */}
+        
         <button
           type="submit"
           disabled={loading}
-          className="group relative w-full flex items-center justify-center gap-2 h-14 rounded-2xl bg-navy text-white font-semibold text-[15px] overflow-hidden transition-all hover:shadow-lg hover:shadow-navy/20 active:scale-[0.98] disabled:opacity-60"
+          className="group relative w-full flex items-center justify-center gap-2 h-14 fs-btn-navy-shimmer rounded-full text-white font-semibold text-[15px] shadow-lg shadow-navy/25 transition hover:brightness-105 active:scale-[0.98] disabled:opacity-60"
         >
-          <span className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <span className="relative flex items-center gap-2">
             {loading ? "Signing in..." : "Sign in"}
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -223,7 +214,7 @@ export default function LoginPage() {
         </button>
       </form>
 
-      {/* Footer */}
+      
       <p className="mt-8 text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{" "}
         <Link

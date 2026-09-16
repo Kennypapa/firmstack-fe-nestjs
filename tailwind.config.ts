@@ -5,6 +5,7 @@ const config: Config = {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./stores/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
@@ -12,11 +13,11 @@ const config: Config = {
         background: "var(--background)",
         foreground: "var(--foreground)",
         primary: {
-          DEFAULT: "var(--primary)",
-          foreground: "var(--primary-foreground)",
-          light: "var(--primary-light)",
+          DEFAULT: "rgb(51 136 255 / <alpha-value>)",
+          foreground: "#ffffff",
+          light: "rgb(123 191 255 / <alpha-value>)",
         },
-        navy: "var(--navy)",
+        navy: "rgb(34 46 77 / <alpha-value>)",
         muted: {
           DEFAULT: "var(--muted)",
           foreground: "var(--muted-foreground)",

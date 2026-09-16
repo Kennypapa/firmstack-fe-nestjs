@@ -8,7 +8,7 @@ export default function VerifyEmailPage() {
   return (
     <AuthLayout tagline="Almost there — just verify your email to complete sign up.">
       <div className="text-center">
-        {/* Animated mail icon */}
+        
         <div className="inline-flex p-5 rounded-2xl bg-primary/[0.06] relative">
           <Mail className="w-10 h-10 text-primary" />
           <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
@@ -38,9 +38,8 @@ export default function VerifyEmailPage() {
 
         <Link
           href="/login"
-          className="group mt-8 relative w-full flex items-center justify-center gap-2 h-14 rounded-2xl bg-navy text-white font-semibold text-[15px] overflow-hidden transition-all hover:shadow-lg hover:shadow-navy/20 active:scale-[0.98]"
+          className="group mt-8 relative w-full flex items-center justify-center gap-2 h-14 fs-btn-navy-shimmer rounded-full text-white font-semibold text-[15px] shadow-lg shadow-navy/25 transition hover:brightness-105 active:scale-[0.98]"
         >
-          <span className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <span className="relative flex items-center gap-2">
             Go to login
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

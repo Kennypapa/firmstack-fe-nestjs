@@ -104,7 +104,7 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen flex font-onest bg-gray-50">
-      {/* Left: branding + stepper */}
+      
       <div className="hidden lg:flex lg:w-[45%] bg-navy flex-col relative overflow-hidden">
         <div
           className="absolute inset-0 pointer-events-none"
@@ -130,11 +130,11 @@ export default function OnboardingPage() {
             A few more details and you&apos;re ready to track revenue, expenses, and profit.
           </p>
 
-          {/* Stepper */}
+          
           <div className="mt-10 flex flex-col gap-1">
             {steps.map((s, i) => (
               <div key={s.id} className="flex items-start gap-4">
-                {/* Icon + line */}
+                
                 <div className="flex flex-col items-center">
                   <span
                     className={`flex h-10 w-10 items-center justify-center rounded-xl border-2 transition-all ${
@@ -159,7 +159,7 @@ export default function OnboardingPage() {
                     />
                   )}
                 </div>
-                {/* Text */}
+                
                 <div className="pt-2">
                   <p
                     className={`font-semibold text-sm transition-colors ${
@@ -179,7 +179,7 @@ export default function OnboardingPage() {
             ))}
           </div>
 
-          {/* Trust indicators */}
+          
           <div className="mt-auto pt-6 flex items-center gap-6 text-white/30 text-xs">
             <span className="flex items-center gap-1.5">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
@@ -199,10 +199,10 @@ export default function OnboardingPage() {
         </div>
       </div>
 
-      {/* Right: steps content */}
+      
       <div className="flex-1 flex flex-col justify-center px-6 sm:px-10 py-12 bg-white">
         <div className="w-full max-w-[440px] mx-auto">
-          {/* Mobile step indicator */}
+          
           <div className="lg:hidden flex items-center gap-2 mb-8">
             {steps.map((s) => (
               <div
@@ -226,7 +226,7 @@ export default function OnboardingPage() {
                 onSubmit={(e) => { e.preventDefault(); setStep(2); }}
                 className="space-y-5"
               >
-                {/* Company name */}
+                
                 <div className="relative">
                   <input
                     type="text"
@@ -242,7 +242,7 @@ export default function OnboardingPage() {
                   <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-navy transition-all duration-300 ${focusedField === "name" ? "w-[calc(100%-2rem)]" : "w-0"}`} />
                 </div>
 
-                {/* Industry */}
+                
                 <div className="relative">
                   <input
                     type="text"
@@ -258,7 +258,7 @@ export default function OnboardingPage() {
                   <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-navy transition-all duration-300 ${focusedField === "industry" ? "w-[calc(100%-2rem)]" : "w-0"}`} />
                 </div>
 
-                {/* Company size */}
+                
                 <div className="relative">
                   <input
                     type="text"
@@ -276,9 +276,8 @@ export default function OnboardingPage() {
 
                 <button
                   type="submit"
-                  className="group relative w-full flex items-center justify-center gap-2 h-14 rounded-2xl bg-navy text-white font-semibold text-[15px] overflow-hidden transition-all hover:shadow-lg hover:shadow-navy/20 active:scale-[0.98]"
+                  className="group relative w-full flex items-center justify-center gap-2 h-14 fs-btn-navy-shimmer rounded-full text-white font-semibold text-[15px] shadow-lg shadow-navy/25 transition hover:brightness-105 active:scale-[0.98]"
                 >
-                  <span className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   <span className="relative flex items-center gap-2">
                     Continue
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -297,7 +296,7 @@ export default function OnboardingPage() {
                 </p>
               </div>
               <div className="space-y-5">
-                {/* Toggle */}
+                
                 <label className="flex items-center gap-3 cursor-pointer group">
                   <div className="relative w-5 h-5">
                     <input
@@ -318,7 +317,7 @@ export default function OnboardingPage() {
 
                 {addEmployee && (
                   <>
-                    {/* Name */}
+                    
                     <div className="relative">
                       <input
                         type="text"
@@ -334,7 +333,7 @@ export default function OnboardingPage() {
                       <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-navy transition-all duration-300 ${focusedField === "empName" ? "w-[calc(100%-2rem)]" : "w-0"}`} />
                     </div>
 
-                    {/* Email */}
+                    
                     <div className="relative">
                       <input
                         type="email"
@@ -351,7 +350,7 @@ export default function OnboardingPage() {
                       <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-navy transition-all duration-300 ${focusedField === "empEmail" ? "w-[calc(100%-2rem)]" : "w-0"}`} />
                     </div>
 
-                    {/* Role select */}
+                    
                     <div className="relative">
                       <select
                         id="ob-emp-role"
@@ -373,7 +372,7 @@ export default function OnboardingPage() {
                   </>
                 )}
 
-                {/* Navigation */}
+                
                 <div className="flex gap-3 pt-2">
                   <button
                     type="button"
@@ -386,9 +385,8 @@ export default function OnboardingPage() {
                   <button
                     type="button"
                     onClick={() => setStep(3)}
-                    className="group relative flex-1 flex items-center justify-center gap-2 h-14 rounded-2xl bg-navy text-white font-semibold text-[15px] overflow-hidden transition-all hover:shadow-lg hover:shadow-navy/20 active:scale-[0.98]"
+                    className="group relative flex-1 flex items-center justify-center gap-2 h-14 fs-btn-navy-shimmer rounded-full text-white font-semibold text-[15px] shadow-lg shadow-navy/25 transition hover:brightness-105 active:scale-[0.98]"
                   >
-                    <span className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <span className="relative flex items-center gap-2">
                       Continue
                       <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -462,9 +460,8 @@ export default function OnboardingPage() {
                     type="button"
                     onClick={handleFinish}
                     disabled={loading}
-                    className="group relative flex-1 flex items-center justify-center gap-2 h-14 rounded-2xl bg-navy text-white font-semibold text-[15px] overflow-hidden transition-all hover:shadow-lg hover:shadow-navy/20 active:scale-[0.98] disabled:opacity-60"
+                    className="group relative flex-1 flex items-center justify-center gap-2 h-14 fs-btn-navy-shimmer rounded-full text-white font-semibold text-[15px] shadow-lg shadow-navy/25 transition hover:brightness-105 active:scale-[0.98] disabled:opacity-60"
                   >
-                    <span className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <span className="relative flex items-center gap-2">
                       Get started
                       <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

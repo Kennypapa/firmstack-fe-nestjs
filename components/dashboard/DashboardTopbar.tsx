@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, ChevronDown, Menu, Search } from "lucide-react";
+import { Bell, ChevronDown, Menu } from "lucide-react";
 import { useAuthStore } from "@/stores/auth";
+import { useDashboardLayoutStore } from "@/stores/dashboard-layout";
 
 interface DashboardTopbarProps {
   onMobileMenuClick: () => void;
@@ -13,19 +14,21 @@ export function DashboardTopbar({ onMobileMenuClick }: DashboardTopbarProps) {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const isEditing = useDashboardLayoutStore((s) => s.isEditing);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
+  const firstName = user?.firstName?.trim() || "Kenny";
   const displayName =
     [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
-    user?.email ||
-    "User";
+    "Kenny Smith";
+  const email = user?.email || "dev@firmstack.com";
   const initials =
     displayName
       .split(" ")
       .map((part) => part[0])
       .join("")
       .slice(0, 2)
-      .toUpperCase() || "U";
+      .toUpperCase() || "KS";
 
   const handleLogout = async () => {
     await logout();
@@ -33,67 +36,64 @@ export function DashboardTopbar({ onMobileMenuClick }: DashboardTopbarProps) {
   };
 
   return (
-    <header className="sticky top-0 z-20 h-16 shrink-0 isolate">
-      {/* Glass layer — pointer-events-none so it never blocks the sidebar */}
+    <header className="sticky top-0 z-20 shrink-0 isolate">
       <div
-        className="absolute inset-0 -z-10 border-b border-white/50 bg-white/65 backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-white/55 shadow-[0_1px_0_rgba(255,255,255,0.6)_inset,0_8px_24px_rgba(34,46,77,0.04)] pointer-events-none"
+        className="pointer-events-none absolute inset-0 -z-10 border-b border-navy/8 bg-white"
         aria-hidden
       />
 
-      <div className="relative h-full flex items-center justify-between px-4 sm:px-6">
-        <div className="flex items-center gap-3">
+      <div className="relative flex items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
+        <div className="flex min-w-0 items-center gap-3">
           <button
             type="button"
             onClick={onMobileMenuClick}
-            className="lg:hidden p-2 -ml-1 rounded-lg text-muted-foreground hover:bg-white/70 hover:text-navy transition-colors"
+            className="-ml-1 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-navy/5 hover:text-navy lg:hidden"
             aria-label="Open menu"
           >
-            <Menu className="w-5 h-5" />
+            <Menu className="h-5 w-5" />
           </button>
 
-          <div className="relative hidden sm:block">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              type="search"
-              placeholder="Search..."
-              className="w-56 lg:w-72 pl-9 pr-4 py-2 rounded-xl border border-white/60 bg-white/50 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-navy/10 focus:border-navy/30 focus:bg-white/80 transition-all shadow-sm"
-            />
+          <div className="min-w-0">
+            <h1 className="truncate text-lg font-bold tracking-tight text-navy sm:text-xl">
+              Welcome {firstName}, <span aria-hidden>🥳</span>
+            </h1>
+            <p className="mt-0.5 truncate text-sm font-medium text-navy/75 sm:text-[15px]">
+              {isEditing
+                ? "Drag widgets to rearrange your dashboard."
+                : "Here's what's happening with your finances today."}
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <button
             type="button"
-            className="sm:hidden p-2 rounded-lg text-muted-foreground hover:bg-white/70 hover:text-navy transition-colors"
-            aria-label="Search"
-          >
-            <Search className="w-5 h-5" />
-          </button>
-
-          <button
-            type="button"
-            className="p-2 rounded-lg text-muted-foreground hover:bg-white/70 hover:text-navy transition-colors relative"
+            className="relative rounded-lg p-2 text-muted-foreground transition-colors hover:bg-navy/5 hover:text-navy"
             aria-label="Notifications"
           >
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white/80" />
+            <Bell className="h-5 w-5" />
+            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
           </button>
+
+          <div className="hidden h-8 w-px bg-navy/10 sm:block" />
 
           <div className="relative">
             <button
               type="button"
               onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="flex items-center gap-2.5 pl-2 pr-1 py-1.5 rounded-xl hover:bg-white/70 transition-colors"
+              className="flex min-w-[200px] items-center gap-3 rounded-full bg-[#e8f2ff] py-2 pl-2.5 pr-5 transition hover:bg-[#dceaff] sm:min-w-[240px] sm:pl-3 sm:pr-6"
             >
-              <div className="w-8 h-8 rounded-full bg-navy/10 flex items-center justify-center">
-                <span className="text-xs font-bold text-navy">{initials}</span>
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#222e4d] text-xs font-bold text-white">
+                {initials}
               </div>
-              <div className="hidden sm:block text-left">
-                <p className="text-sm font-medium text-navy leading-tight">{displayName}</p>
-                <p className="text-[11px] text-muted-foreground">{user?.email}</p>
+              <div className="hidden min-w-0 flex-1 text-left sm:block">
+                <p className="truncate text-sm font-semibold leading-tight text-navy">
+                  {displayName}
+                </p>
+                <p className="mt-0.5 truncate text-[11px] text-navy/60">{email}</p>
               </div>
               <ChevronDown
-                className={`hidden sm:block w-4 h-4 text-muted-foreground transition-transform ${
+                className={`ml-auto hidden h-4 w-4 shrink-0 text-navy/45 transition-transform sm:block ${
                   userMenuOpen ? "rotate-180" : ""
                 }`}
               />
@@ -105,24 +105,24 @@ export function DashboardTopbar({ onMobileMenuClick }: DashboardTopbarProps) {
                   aria-hidden
                   onClick={() => setUserMenuOpen(false)}
                 />
-                <div className="absolute right-0 top-full mt-1 py-1 w-48 rounded-xl shadow-lg border border-white/60 bg-white/90 backdrop-blur-xl z-40">
+                <div className="absolute right-0 top-full z-40 mt-1 w-48 rounded-xl border border-navy/8 bg-white py-1 shadow-lg">
                   <a
                     href="/dashboard/profile"
-                    className="block px-4 py-2 text-sm text-navy hover:bg-white/80 transition-colors"
+                    className="block px-4 py-2 text-sm text-navy transition-colors hover:bg-navy/5"
                   >
                     Profile
                   </a>
                   <a
                     href="/dashboard/settings"
-                    className="block px-4 py-2 text-sm text-navy hover:bg-white/80 transition-colors"
+                    className="block px-4 py-2 text-sm text-navy transition-colors hover:bg-navy/5"
                   >
                     Settings
                   </a>
-                  <div className="border-t border-gray-100/80 my-1" />
+                  <div className="my-1 border-t border-navy/8" />
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50/80 transition-colors"
+                    className="block w-full px-4 py-2 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
                   >
                     Logout
                   </button>

@@ -14,6 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Contact,
 } from "lucide-react";
 
 const WORKSPACE_KEY = "firmstack_workspace";
@@ -21,6 +22,7 @@ const WORKSPACE_KEY = "firmstack_workspace";
 const mainNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, companyOnly: false },
   { href: "/dashboard/invoices", label: "Invoices", icon: FileText, companyOnly: false },
+  { href: "/dashboard/clients", label: "Clients", icon: Contact, companyOnly: false },
   { href: "/dashboard/expenses", label: "Expenses", icon: CreditCard, companyOnly: false },
   { href: "/dashboard/employees", label: "Employees", icon: Users, companyOnly: true },
   { href: "/dashboard/settings", label: "Settings", icon: Settings, companyOnly: false },
@@ -96,12 +98,12 @@ export function DashboardSidebar({
         aria-hidden
       />
       <div className="relative flex flex-col h-full">
-        {/* Header */}
+        
         <div className="flex items-center justify-between h-16 px-4 border-b border-white/10 shrink-0">
           <Link href="/dashboard" className="flex items-center shrink-0 min-w-0">
             <FirmstackLogoWhite collapsed={collapsed} />
           </Link>
-          {/* Close on mobile, collapse on desktop */}
+          
           <button
             type="button"
             onClick={() => {
@@ -123,7 +125,7 @@ export function DashboardSidebar({
           </button>
         </div>
 
-        {/* Navigation */}
+        
         <nav className="flex-1 py-3 px-3 space-y-0.5 min-h-0 overflow-y-auto scrollbar-hide">
           {mainNav.map((item) => {
             const isActive =
@@ -148,7 +150,7 @@ export function DashboardSidebar({
           })}
         </nav>
 
-        {/* Footer */}
+        
         <div className={`p-3 border-t border-white/10 space-y-0.5 ${collapsed ? "flex flex-col items-center" : ""}`}>
           <Link
             href="/dashboard/profile"
@@ -174,7 +176,7 @@ export function DashboardSidebar({
 
   return (
     <>
-      {/* Desktop sidebar */}
+      
       <aside
         className={`hidden lg:flex fixed left-0 top-0 z-50 flex-col h-screen overflow-hidden text-white bg-navy transition-all duration-200 ${
           collapsed ? "w-[72px]" : "w-64"
@@ -183,7 +185,7 @@ export function DashboardSidebar({
         {sidebarContent}
       </aside>
 
-      {/* Mobile sidebar drawer */}
+      
       <aside
         className={`lg:hidden fixed left-0 top-0 z-50 flex flex-col h-screen w-72 overflow-hidden text-white bg-navy transition-transform duration-300 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"

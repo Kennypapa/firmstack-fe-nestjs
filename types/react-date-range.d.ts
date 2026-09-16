@@ -12,6 +12,19 @@ declare module "react-date-range" {
     direction?: "horizontal" | "vertical";
     rangeColors?: string[];
     showDateDisplay?: boolean;
+    staticRanges?: unknown[];
+    inputRanges?: unknown[];
+  }
+  export interface CalendarProps {
+    date?: Date;
+    onChange?: (date: Date) => void;
+    months?: number;
+    direction?: "horizontal" | "vertical";
+    color?: string;
+    rangeColors?: string[];
+    showDateDisplay?: boolean;
+    showMonthAndYearPickers?: boolean;
   }
   export class DateRangePicker extends Component<DateRangePickerProps> {}
+  export class Calendar extends Component<CalendarProps> {}
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
@@ -55,59 +56,66 @@ const defaultRange = {
   key: "selection",
 };
 
-/* ─── Empty state ─── */
-function EmptyState() {
+/* ─── Empty table body ─── */
+function EmptyRecords() {
   return (
-    <div className="py-16 px-6 text-center">
-      {/* Invoice illustration */}
-      <div className="inline-flex mb-6">
-        <svg width="120" height="120" viewBox="0 0 120 120" fill="none" aria-hidden>
-          <rect x="20" y="10" width="80" height="100" rx="8" fill="#f8f9fb" stroke="#e5e7eb" strokeWidth="1.5" />
-          <rect x="32" y="26" width="36" height="4" rx="2" fill="#222e4d" opacity="0.15" />
-          <rect x="32" y="36" width="56" height="3" rx="1.5" fill="#222e4d" opacity="0.08" />
-          <rect x="32" y="44" width="48" height="3" rx="1.5" fill="#222e4d" opacity="0.08" />
-          <rect x="32" y="56" width="56" height="1" rx="0.5" fill="#e5e7eb" />
-          <rect x="32" y="64" width="28" height="3" rx="1.5" fill="#222e4d" opacity="0.1" />
-          <rect x="72" y="64" width="16" height="3" rx="1.5" fill="#222e4d" opacity="0.1" />
-          <rect x="32" y="72" width="28" height="3" rx="1.5" fill="#222e4d" opacity="0.1" />
-          <rect x="72" y="72" width="16" height="3" rx="1.5" fill="#222e4d" opacity="0.1" />
-          <rect x="32" y="84" width="56" height="1" rx="0.5" fill="#e5e7eb" />
-          <rect x="60" y="90" width="28" height="5" rx="2.5" fill="#222e4d" opacity="0.12" />
-          <circle cx="90" cy="90" r="20" fill="#222e4d" opacity="0.06" />
-          <path d="M84 90l4 4 8-8" stroke="#222e4d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.3" />
-        </svg>
-      </div>
-      <h3 className="text-lg font-semibold text-navy">No invoices yet</h3>
-      <p className="mt-2 text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
-        Create your first professional invoice in under 60 seconds. Add clients, items, and send instantly.
-      </p>
-      <div className="mt-6 flex items-center justify-center gap-3">
-        <Link
-          href="/dashboard/invoices/templates"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-navy text-white text-sm font-semibold hover:bg-navy/90 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Create Invoice
-        </Link>
-      </div>
-      {/* 3-step hint */}
-      <div className="mt-10 flex items-center justify-center gap-8 text-xs text-muted-foreground">
-        <div className="flex items-center gap-2">
-          <span className="w-6 h-6 rounded-full bg-navy/[0.06] text-navy font-bold text-[10px] flex items-center justify-center">1</span>
-          Add client
-        </div>
-        <div className="w-8 h-px bg-gray-200" />
-        <div className="flex items-center gap-2">
-          <span className="w-6 h-6 rounded-full bg-navy/[0.06] text-navy font-bold text-[10px] flex items-center justify-center">2</span>
-          Add items
-        </div>
-        <div className="w-8 h-px bg-gray-200" />
-        <div className="flex items-center gap-2">
-          <span className="w-6 h-6 rounded-full bg-navy/[0.06] text-navy font-bold text-[10px] flex items-center justify-center">3</span>
-          Send
-        </div>
-      </div>
+    <div className="flex flex-col items-center justify-center gap-2.5 text-center">
+      <svg
+        viewBox="0 0 64 56"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-14 h-14"
+        aria-hidden
+      >
+        <path
+          d="M6 18.5C6 16.015 8.015 14 10.5 14H24.2c.8 0 1.55.38 2.02 1.02L28.5 18H53.5C55.985 18 58 20.015 58 22.5V46c0 2.485-2.015 4.5-4.5 4.5H10.5C8.015 50.5 6 48.485 6 46V18.5Z"
+          stroke="#222e4d"
+          strokeWidth="2.4"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M6 22.5H58"
+          stroke="#222e4d"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+        />
+        <path
+          d="M24 30.5L28.5 35M28.5 30.5L24 35"
+          stroke="#222e4d"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+        />
+        <path
+          d="M35.5 30.5L40 35M40 30.5L35.5 35"
+          stroke="#222e4d"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+        />
+        <path
+          d="M27 41c2.2-2.4 7.8-2.4 10 0"
+          stroke="#222e4d"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+        />
+        <path
+          d="M50 8.5l2.2-3.2M54.5 11l3.5-1.2M53 15.5l3.2 1.8"
+          stroke="#222e4d"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+      </svg>
+      <p className="text-sm font-medium text-navy/70">No record yet</p>
     </div>
+  );
+}
+
+function TableEmpty({ colSpan }: { colSpan: number }) {
+  return (
+    <tr>
+      <td colSpan={colSpan} className="px-6 py-14">
+        <EmptyRecords />
+      </td>
+    </tr>
   );
 }
 
@@ -123,6 +131,12 @@ export default function InvoicesPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [pickerMonths, setPickerMonths] = useState(1);
+  const [showPickerRanges, setShowPickerRanges] = useState(true);
+  const [pickerPos, setPickerPos] = useState<{
+    top: number;
+    right: number;
+  } | null>(null);
   const [aggregates, setAggregates] = useState({
     totalInvoiced: 0,
     paid: 0,
@@ -130,12 +144,60 @@ export default function InvoicesPage() {
     overdue: 0,
   });
   const pickerRef = useRef<HTMLDivElement>(null);
+  const pickerPanelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!pickerOpen) {
+      setPickerPos(null);
+      return;
+    }
+
+    const updateLayout = () => {
+      const anchor = pickerRef.current;
+      if (!anchor) return;
+
+      const rect = anchor.getBoundingClientRect();
+      const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
+      const sidebarGutter = isDesktop ? 280 : 16;
+      const available = Math.max(280, window.innerWidth - sidebarGutter - 16);
+
+      const months = available >= 780 ? 2 : 1;
+      const showRanges = available >= 560;
+      setPickerMonths(months);
+      setShowPickerRanges(showRanges);
+
+      // Approx width of picker content (ranges + months) so we never need scroll
+      const estimatedWidth =
+        (showRanges ? 226 : 0) + months * 278 + 20;
+      const width = Math.min(estimatedWidth, available);
+
+      let right = Math.max(16, window.innerWidth - rect.right);
+      const leftEdge = window.innerWidth - right - width;
+      if (leftEdge < sidebarGutter) {
+        right = Math.max(16, window.innerWidth - sidebarGutter - width);
+      }
+
+      setPickerPos({
+        top: rect.bottom + 8,
+        right,
+      });
+    };
+
+    updateLayout();
+    window.addEventListener("resize", updateLayout);
+    window.addEventListener("scroll", updateLayout, true);
+    return () => {
+      window.removeEventListener("resize", updateLayout);
+      window.removeEventListener("scroll", updateLayout, true);
+    };
+  }, [pickerOpen]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
-        setPickerOpen(false);
-      }
+      const target = event.target as Node;
+      if (pickerRef.current?.contains(target)) return;
+      if (pickerPanelRef.current?.contains(target)) return;
+      setPickerOpen(false);
     }
     if (pickerOpen) {
       document.addEventListener("mousedown", handleClickOutside);
@@ -246,7 +308,7 @@ export default function InvoicesPage() {
           </div>
 
           {/* Status pills */}
-          <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-0.5">
+          <div className="flex items-center gap-1 rounded-xl border border-gray-200 bg-white p-1 shadow-sm shadow-navy/[0.03]">
             {["All", "Paid", "Pending", "Overdue", "Draft"].map((s) => (
               <button
                 key={s}
@@ -254,7 +316,7 @@ export default function InvoicesPage() {
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                   statusFilter === s
                     ? "bg-navy text-white shadow-sm"
-                    : "text-muted-foreground hover:text-navy"
+                    : "text-muted-foreground hover:bg-gray-50 hover:text-navy"
                 }`}
               >
                 {s}
@@ -271,27 +333,43 @@ export default function InvoicesPage() {
               <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
               {format(dateRange.startDate, "MMM d")} – {format(dateRange.endDate, "MMM d, yyyy")}
             </button>
-            {pickerOpen && (
-              <div className="absolute right-0 top-full z-50 mt-2 rounded-xl border border-gray-200 bg-white p-2 shadow-xl">
-                <DateRangePicker
-                  ranges={[dateRange]}
-                  onChange={(item) => setDateRange({ ...item.selection, key: "selection" })}
-                  months={2}
-                  direction="horizontal"
-                  rangeColors={["#222e4d"]}
-                  showDateDisplay={false}
-                />
-                <div className="flex justify-end border-t border-gray-100 pt-2 mt-2">
-                  <button
-                    type="button"
-                    onClick={() => setPickerOpen(false)}
-                    className="rounded-lg bg-navy text-white text-xs font-medium px-4 py-2 hover:bg-navy/90 transition-colors"
-                  >
-                    Apply
-                  </button>
-                </div>
-              </div>
-            )}
+            {pickerOpen &&
+              pickerPos &&
+              createPortal(
+                <div
+                  ref={pickerPanelRef}
+                  className={`firmstack-date-picker fixed z-[100] rounded-xl border border-gray-200 bg-white p-2 shadow-xl ${
+                    showPickerRanges ? "" : "firmstack-date-picker--no-ranges"
+                  }`}
+                  style={{
+                    top: pickerPos.top,
+                    right: pickerPos.right,
+                  }}
+                >
+                  <DateRangePicker
+                    ranges={[dateRange]}
+                    onChange={(item) =>
+                      setDateRange({ ...item.selection, key: "selection" })
+                    }
+                    months={pickerMonths}
+                    direction="horizontal"
+                    rangeColors={["#222e4d"]}
+                    showDateDisplay={false}
+                    staticRanges={showPickerRanges ? undefined : []}
+                    inputRanges={showPickerRanges ? undefined : []}
+                  />
+                  <div className="mt-2 flex justify-end border-t border-gray-100 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setPickerOpen(false)}
+                      className="rounded-lg bg-navy px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-navy/90"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                </div>,
+                document.body
+              )}
           </div>
         </div>
       </div>
@@ -324,8 +402,6 @@ export default function InvoicesPage() {
       <div className="rounded-2xl border border-gray-100 bg-white overflow-visible">
         {loading ? (
           <div className="p-12 text-center text-sm text-muted-foreground">Loading invoices…</div>
-        ) : filtered.length === 0 ? (
-          <EmptyState />
         ) : (
           <>
             {/* Desktop table */}
@@ -357,175 +433,185 @@ export default function InvoicesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {paged.map((inv, rowIndex) => {
-                    const rowNumber = pageStart + rowIndex + 1;
-                    return (
-                      <tr
-                        key={inv.uuid}
-                        className="border-t border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors"
-                        onClick={() => router.push(`/dashboard/invoices/${inv.uuid}`)}
-                      >
-                        <td className="px-5 py-3.5 text-sm font-medium text-gray-500 tabular-nums">
-                          {rowNumber}
-                        </td>
-                        <td className="px-5 py-3.5">
-                          <span className="font-semibold text-navy">{inv.id}</span>
-                        </td>
-                        <td className="px-5 py-3.5">
-                          <div>
-                            <p className="font-medium text-navy">{inv.client}</p>
-                            <p className="text-[11px] text-muted-foreground">{inv.email}</p>
-                          </div>
-                        </td>
-                        <td className="px-5 py-3.5 font-semibold text-navy">
-                          ${inv.amount.toLocaleString()}
-                        </td>
-                        <td className="px-5 py-3.5 text-muted-foreground">
-                          {format(new Date(inv.dueDate), "MMM d, yyyy")}
-                        </td>
-                        <td className="px-5 py-3.5">
-                          <span
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
-                              statusConfig[inv.status as StatusKey].className
-                            }`}
-                          >
-                            <span
-                              className={`w-1.5 h-1.5 rounded-full ${
-                                statusConfig[inv.status as StatusKey].dot
-                              }`}
-                            />
-                            {statusConfig[inv.status as StatusKey].label}
-                          </span>
-                        </td>
-                        <td
-                          className="px-5 py-3.5 text-right"
-                          onClick={(e) => e.stopPropagation()}
+                  {filtered.length === 0 ? (
+                    <TableEmpty colSpan={7} />
+                  ) : (
+                    paged.map((inv, rowIndex) => {
+                      const rowNumber = pageStart + rowIndex + 1;
+                      return (
+                        <tr
+                          key={inv.uuid}
+                          className="border-t border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors"
+                          onClick={() => router.push(`/dashboard/invoices/${inv.uuid}`)}
                         >
-                          <div className="inline-flex justify-end">
-                            <TableActionMenu
-                              isOpen={activeMenu === inv.uuid}
-                              onToggle={() =>
-                                setActiveMenu(activeMenu === inv.uuid ? null : inv.uuid)
-                              }
-                              onClose={() => setActiveMenu(null)}
-                              ariaLabel={`Actions for ${inv.id}`}
+                          <td className="px-5 py-3.5 text-sm font-medium text-gray-500 tabular-nums">
+                            {rowNumber}
+                          </td>
+                          <td className="px-5 py-3.5">
+                            <span className="font-semibold text-navy">{inv.id}</span>
+                          </td>
+                          <td className="px-5 py-3.5">
+                            <div>
+                              <p className="font-medium text-navy">{inv.client}</p>
+                              <p className="text-[11px] text-muted-foreground">{inv.email}</p>
+                            </div>
+                          </td>
+                          <td className="px-5 py-3.5 font-semibold text-navy">
+                            ${inv.amount.toLocaleString()}
+                          </td>
+                          <td className="px-5 py-3.5 text-muted-foreground">
+                            {format(new Date(inv.dueDate), "MMM d, yyyy")}
+                          </td>
+                          <td className="px-5 py-3.5">
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+                                statusConfig[inv.status as StatusKey].className
+                              }`}
                             >
-                              <Link
-                                href={`/dashboard/invoices/${inv.uuid}`}
-                                className="flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-gray-50 transition-colors"
+                              <span
+                                className={`w-1.5 h-1.5 rounded-full ${
+                                  statusConfig[inv.status as StatusKey].dot
+                                }`}
+                              />
+                              {statusConfig[inv.status as StatusKey].label}
+                            </span>
+                          </td>
+                          <td
+                            className="px-5 py-3.5 text-right"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="inline-flex justify-end">
+                              <TableActionMenu
+                                isOpen={activeMenu === inv.uuid}
+                                onToggle={() =>
+                                  setActiveMenu(activeMenu === inv.uuid ? null : inv.uuid)
+                                }
+                                onClose={() => setActiveMenu(null)}
+                                ariaLabel={`Actions for ${inv.id}`}
                               >
-                                <Eye className="w-3.5 h-3.5" /> View
-                              </Link>
-                              <Link
-                                href={`/dashboard/invoices/${inv.uuid}/edit`}
-                                className="flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-gray-50 transition-colors"
-                              >
-                                <Pencil className="w-3.5 h-3.5" /> Edit
-                              </Link>
-                              <button
-                                type="button"
-                                className="flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-gray-50 transition-colors w-full"
-                              >
-                                <Send className="w-3.5 h-3.5" /> Resend
-                              </button>
-                              <button
-                                type="button"
-                                className="flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-gray-50 transition-colors w-full"
-                              >
-                                <Download className="w-3.5 h-3.5" /> Download PDF
-                              </button>
-                              <div className="border-t border-gray-100 my-1" />
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setDeleteConfirm(inv.uuid);
-                                  setActiveMenu(null);
-                                }}
-                                className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors w-full"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" /> Delete
-                              </button>
-                            </TableActionMenu>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                                <Link
+                                  href={`/dashboard/invoices/${inv.uuid}`}
+                                  className="flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-gray-50 transition-colors"
+                                >
+                                  <Eye className="w-3.5 h-3.5" /> View
+                                </Link>
+                                <Link
+                                  href={`/dashboard/invoices/${inv.uuid}/edit`}
+                                  className="flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-gray-50 transition-colors"
+                                >
+                                  <Pencil className="w-3.5 h-3.5" /> Edit
+                                </Link>
+                                <button
+                                  type="button"
+                                  className="flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-gray-50 transition-colors w-full"
+                                >
+                                  <Send className="w-3.5 h-3.5" /> Resend
+                                </button>
+                                <button
+                                  type="button"
+                                  className="flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-gray-50 transition-colors w-full"
+                                >
+                                  <Download className="w-3.5 h-3.5" /> Download PDF
+                                </button>
+                                <div className="border-t border-gray-100 my-1" />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setDeleteConfirm(inv.uuid);
+                                    setActiveMenu(null);
+                                  }}
+                                  className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors w-full"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" /> Delete
+                                </button>
+                              </TableActionMenu>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
 
             {/* Mobile card list */}
             <div className="md:hidden divide-y divide-gray-50 overflow-visible">
-              {paged.map((inv, rowIndex) => {
-                const rowNumber = pageStart + rowIndex + 1;
-                return (
-                  <div
-                    key={inv.uuid}
-                    className="flex items-center justify-between gap-3 p-4 hover:bg-gray-50/50 transition-colors"
-                  >
-                    <span className="text-xs font-medium text-gray-500 tabular-nums w-5 shrink-0">
-                      {rowNumber}
-                    </span>
-                    <Link
-                      href={`/dashboard/invoices/${inv.uuid}`}
-                      className="flex items-center justify-between flex-1 min-w-0"
+              {filtered.length === 0 ? (
+                <div className="px-6 py-14">
+                  <EmptyRecords />
+                </div>
+              ) : (
+                paged.map((inv, rowIndex) => {
+                  const rowNumber = pageStart + rowIndex + 1;
+                  return (
+                    <div
+                      key={inv.uuid}
+                      className="flex items-center justify-between gap-3 p-4 hover:bg-gray-50/50 transition-colors"
                     >
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="font-semibold text-navy text-sm">{inv.client}</p>
-                          <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                              statusConfig[inv.status as StatusKey].className
-                            }`}
-                          >
-                            {statusConfig[inv.status as StatusKey].label}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">
-                          {inv.id} &middot; Due {format(new Date(inv.dueDate), "MMM d")}
-                        </p>
-                      </div>
-                      <p className="font-bold text-navy text-sm shrink-0 ml-3">
-                        ${inv.amount.toLocaleString()}
-                      </p>
-                    </Link>
-                    <div className="shrink-0">
-                      <TableActionMenu
-                        isOpen={activeMenu === inv.uuid}
-                        onToggle={() =>
-                          setActiveMenu(activeMenu === inv.uuid ? null : inv.uuid)
-                        }
-                        onClose={() => setActiveMenu(null)}
-                        ariaLabel={`Actions for ${inv.id}`}
+                      <span className="text-xs font-medium text-gray-500 tabular-nums w-5 shrink-0">
+                        {rowNumber}
+                      </span>
+                      <Link
+                        href={`/dashboard/invoices/${inv.uuid}`}
+                        className="flex items-center justify-between flex-1 min-w-0"
                       >
-                        <Link
-                          href={`/dashboard/invoices/${inv.uuid}`}
-                          className="flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-gray-50 transition-colors"
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold text-navy text-sm">{inv.client}</p>
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                                statusConfig[inv.status as StatusKey].className
+                              }`}
+                            >
+                              {statusConfig[inv.status as StatusKey].label}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                            {inv.id} &middot; Due {format(new Date(inv.dueDate), "MMM d")}
+                          </p>
+                        </div>
+                        <p className="font-bold text-navy text-sm shrink-0 ml-3">
+                          ${inv.amount.toLocaleString()}
+                        </p>
+                      </Link>
+                      <div className="shrink-0">
+                        <TableActionMenu
+                          isOpen={activeMenu === inv.uuid}
+                          onToggle={() =>
+                            setActiveMenu(activeMenu === inv.uuid ? null : inv.uuid)
+                          }
+                          onClose={() => setActiveMenu(null)}
+                          ariaLabel={`Actions for ${inv.id}`}
                         >
-                          <Eye className="w-3.5 h-3.5" /> View
-                        </Link>
-                        <Link
-                          href={`/dashboard/invoices/${inv.id}/edit`}
-                          className="flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-gray-50 transition-colors"
-                        >
-                          <Pencil className="w-3.5 h-3.5" /> Edit
-                        </Link>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setDeleteConfirm(inv.id);
-                            setActiveMenu(null);
-                          }}
-                          className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors w-full"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" /> Delete
-                        </button>
-                      </TableActionMenu>
+                          <Link
+                            href={`/dashboard/invoices/${inv.uuid}`}
+                            className="flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-gray-50 transition-colors"
+                          >
+                            <Eye className="w-3.5 h-3.5" /> View
+                          </Link>
+                          <Link
+                            href={`/dashboard/invoices/${inv.id}/edit`}
+                            className="flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-gray-50 transition-colors"
+                          >
+                            <Pencil className="w-3.5 h-3.5" /> Edit
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDeleteConfirm(inv.id);
+                              setActiveMenu(null);
+                            }}
+                            className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors w-full"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" /> Delete
+                          </button>
+                        </TableActionMenu>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
 
             {/* Pagination — inside white card */}

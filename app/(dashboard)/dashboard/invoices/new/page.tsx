@@ -10,11 +10,15 @@ import {
   Eye,
   EyeOff,
   LayoutTemplate,
+  ImagePlus,
+  ArrowRight,
+  Send,
 } from "lucide-react";
 import { InvoiceDocument } from "@/components/invoices/InvoiceDocument";
 import { InvoiceDownloadMenu } from "@/components/invoices/InvoiceDownloadMenu";
 import { InvoiceSignaturePad } from "@/components/invoices/InvoiceSignaturePad";
 import { InvoiceSendSheet } from "@/components/invoices/InvoiceSendSheet";
+import { ClientPicker } from "@/components/invoices/ClientPicker";
 import {
   getTemplateById,
   getTemplateColor,
@@ -26,6 +30,9 @@ import {
   loadCompanyLogo,
   loadCompanyProfile,
 } from "@/lib/company-branding";
+import { CURRENCIES, getCurrencySymbol } from "@/lib/currencies";
+import { getClient } from "@/lib/api/clients";
+import type { ClientItem } from "@/lib/api/types";
 
 interface LineItem {
   id: string;
@@ -39,6 +46,7 @@ function NewInvoiceContent() {
   const searchParams = useSearchParams();
   const urlTemplate = searchParams.get("template");
   const urlColor = searchParams.get("color");
+  const urlClient = searchParams.get("client");
 
   const [templateId, setTemplateId] = useState("firmstack");
   const [colorId, setColorId] = useState<string | null>(null);
@@ -46,7 +54,22 @@ function NewInvoiceContent() {
   const selectedColor = getTemplateColor(template, colorId);
   const [companyName, setCompanyName] = useState("Firmstack");
   const [companyEmail, setCompanyEmail] = useState("invoices@firmstack.com");
+  const [companyPhone, setCompanyPhone] = useState("");
+  const [companyAddress, setCompanyAddress] = useState("");
+  const [companyTaxId, setCompanyTaxId] = useState("");
   const [companyLogo, setCompanyLogo] = useState<string | null>(null);
+  const [brandingReady, setBrandingReady] = useState(false);
+
+  const refreshCompanyBranding = () => {
+    const profile = loadCompanyProfile();
+    setCompanyName(profile.name);
+    setCompanyEmail(profile.email);
+    setCompanyPhone(profile.phone);
+    setCompanyAddress(profile.address);
+    setCompanyTaxId(profile.taxId);
+    setCompanyLogo(loadCompanyLogo());
+    setBrandingReady(true);
+  };
 
   useEffect(() => {
     if (urlTemplate) {
@@ -58,14 +81,54 @@ function NewInvoiceContent() {
       setTemplateId(prefs.templateId);
       setColorId(prefs.colorId);
     }
-    const profile = loadCompanyProfile();
-    setCompanyName(profile.name);
-    setCompanyEmail(profile.email);
-    setCompanyLogo(loadCompanyLogo());
+    refreshCompanyBranding();
   }, [urlTemplate, urlColor]);
+
+  useEffect(() => {
+    const onFocus = () => refreshCompanyBranding();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, []);
 
   const [clientName, setClientName] = useState("");
   const [clientEmail, setClientEmail] = useState("");
+  const [clientAddress, setClientAddress] = useState("");
+  const [linkedClientId, setLinkedClientId] = useState<string | null>(null);
+
+  const applyClient = (client: ClientItem) => {
+    setLinkedClientId(client.id);
+    setClientName(client.name);
+    setClientEmail(client.email || "");
+    setClientAddress(client.address || "");
+  };
+
+  useEffect(() => {
+    if (!urlClient) return;
+    let cancelled = false;
+    getClient(urlClient)
+      .then((client) => {
+        if (!cancelled) applyClient(client);
+      })
+      .catch(() => {
+        /* ignore missing client */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [urlClient]);
+
+  const templatesHref = linkedClientId || urlClient
+    ? `/dashboard/invoices/templates?client=${encodeURIComponent(linkedClientId || urlClient || "")}`
+    : "/dashboard/invoices/templates";
+  const [invoiceNumber, setInvoiceNumber] = useState(() => {
+    const d = new Date();
+    const stamp = `${d.getFullYear().toString().slice(-2)}${String(
+      d.getMonth() + 1
+    ).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+    const seq = String(Math.floor(Math.random() * 900) + 100);
+    return `INV-${stamp}-${seq}`;
+  });
+  const [poNumber, setPoNumber] = useState("");
   const [invoiceDate, setInvoiceDate] = useState(
     new Date().toISOString().slice(0, 10)
   );
@@ -73,6 +136,8 @@ function NewInvoiceContent() {
   const [currency, setCurrency] = useState("USD");
   const [taxPercent, setTaxPercent] = useState(0);
   const [discountAmount, setDiscountAmount] = useState(0);
+  const [paymentTerms, setPaymentTerms] = useState("Payment due within 20 days.");
+  const [paymentInstructions, setPaymentInstructions] = useState("");
   const [notes, setNotes] = useState("");
   const [showPreview, setShowPreview] = useState(true);
   const [focusedField, setFocusedField] = useState<string | null>(null);
@@ -144,8 +209,7 @@ function NewInvoiceContent() {
   const tax = (subtotal * taxPercent) / 100;
   const grandTotal = Math.max(0, subtotal + tax - discountAmount);
 
-  const currencySymbol =
-    currency === "EUR" ? "\u20AC" : currency === "GBP" ? "\u00A3" : "$";
+  const currencySymbol = getCurrencySymbol(currency);
 
   const formatAmount = (val: number) =>
     `${currencySymbol}${val.toLocaleString("en-US", {
@@ -153,17 +217,20 @@ function NewInvoiceContent() {
       maximumFractionDigits: 2,
     })}`;
 
-  const invoiceNumber = "INV-029";
-
   const previewData = {
     companyName,
     companyEmail,
+    companyPhone: companyPhone || undefined,
+    companyAddress: companyAddress || undefined,
+    companyTaxId: companyTaxId || undefined,
     companyLogo,
     clientName,
     clientEmail,
+    clientAddress: clientAddress || undefined,
     invoiceDate,
     dueDate,
     invoiceNumber,
+    poNumber: poNumber || undefined,
     lineItems,
     subtotal,
     taxPercent,
@@ -171,6 +238,8 @@ function NewInvoiceContent() {
     discountAmount,
     grandTotal,
     notes,
+    paymentTerms: paymentTerms || undefined,
+    paymentInstructions: paymentInstructions || undefined,
     formatAmount,
     signatureImage: signatureEnabled ? signatureImage : null,
     signerName: signatureEnabled ? signerName : undefined,
@@ -193,7 +262,7 @@ function NewInvoiceContent() {
     <div className="w-full font-onest">
       <div className="flex items-center justify-between mb-6">
         <Link
-          href="/dashboard/invoices/templates"
+          href={templatesHref}
           className="inline-flex items-center gap-2 text-sm font-medium text-navy hover:text-navy/80 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -213,8 +282,8 @@ function NewInvoiceContent() {
         </button>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6">
-        <div className="flex-1 min-w-0 space-y-5">
+      <div className="flex flex-col lg:flex-row gap-6 lg:items-start">
+        <div className="w-full lg:w-3/5 min-w-0 space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
             <div>
               <h1 className="text-2xl font-bold text-navy tracking-tight">
@@ -233,17 +302,44 @@ function NewInvoiceContent() {
             </Link>
           </div>
 
+          {!companyLogo && brandingReady && (
+            <Link
+              href="/dashboard/settings"
+              className="flex w-full items-center gap-3 rounded-2xl border border-amber-200/80 bg-amber-50/80 px-4 py-3 text-left transition-colors hover:bg-amber-50"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-navy shadow-sm">
+                <ImagePlus className="h-4 w-4" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-navy">
+                  Upload your company logo in Settings
+                </span>
+                <span className="block text-xs text-navy/65">
+                  It will show on this invoice automatically once saved.
+                </span>
+              </span>
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-navy">
+                Settings
+                <ArrowRight className="h-3.5 w-3.5" />
+              </span>
+            </Link>
+          )}
+
           <div className="rounded-2xl border border-gray-100 bg-white p-5 space-y-4">
             <h2 className="text-sm font-semibold text-navy uppercase tracking-wider">
               Client & Details
             </h2>
+            <ClientPicker onSelect={applyClient} />
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="relative">
                 <input
                   type="text"
                   id="client-name"
                   value={clientName}
-                  onChange={(e) => setClientName(e.target.value)}
+                  onChange={(e) => {
+                    setClientName(e.target.value);
+                    setLinkedClientId(null);
+                  }}
                   onFocus={() => setFocusedField("clientName")}
                   onBlur={() => setFocusedField(null)}
                   className="peer w-full h-12 px-4 pt-5 pb-1 rounded-xl border border-gray-200 bg-white text-navy text-sm placeholder-transparent outline-none transition-all focus:border-navy focus:ring-2 focus:ring-navy/10"
@@ -265,7 +361,10 @@ function NewInvoiceContent() {
                   type="email"
                   id="client-email"
                   value={clientEmail}
-                  onChange={(e) => setClientEmail(e.target.value)}
+                  onChange={(e) => {
+                    setClientEmail(e.target.value);
+                    setLinkedClientId(null);
+                  }}
                   onFocus={() => setFocusedField("clientEmail")}
                   onBlur={() => setFocusedField(null)}
                   className="peer w-full h-12 px-4 pt-5 pb-1 rounded-xl border border-gray-200 bg-white text-navy text-sm placeholder-transparent outline-none transition-all focus:border-navy focus:ring-2 focus:ring-navy/10"
@@ -281,6 +380,44 @@ function NewInvoiceContent() {
                 >
                   Client email
                 </label>
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+                  Billing address
+                </label>
+                <input
+                  type="text"
+                  value={clientAddress}
+                  onChange={(e) => {
+                    setClientAddress(e.target.value);
+                    setLinkedClientId(null);
+                  }}
+                  placeholder="Street, city, country"
+                  className="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-navy text-sm focus:border-navy focus:ring-2 focus:ring-navy/10 outline-none transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+                  Invoice number
+                </label>
+                <input
+                  type="text"
+                  value={invoiceNumber}
+                  onChange={(e) => setInvoiceNumber(e.target.value)}
+                  className="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-navy text-sm focus:border-navy focus:ring-2 focus:ring-navy/10 outline-none transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+                  PO / Reference
+                </label>
+                <input
+                  type="text"
+                  value={poNumber}
+                  onChange={(e) => setPoNumber(e.target.value)}
+                  placeholder="Optional"
+                  className="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-navy text-sm focus:border-navy focus:ring-2 focus:ring-navy/10 outline-none transition-all"
+                />
               </div>
               <div>
                 <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
@@ -314,9 +451,11 @@ function NewInvoiceContent() {
                 onChange={(e) => setCurrency(e.target.value)}
                 className="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-navy text-sm focus:border-navy focus:ring-2 focus:ring-navy/10 outline-none transition-all appearance-none"
               >
-                <option value="USD">USD ($)</option>
-                <option value="EUR">EUR (&euro;)</option>
-                <option value="GBP">GBP (&pound;)</option>
+                {CURRENCIES.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.label}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -437,14 +576,38 @@ function NewInvoiceContent() {
             </div>
             <div>
               <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+                Payment terms
+              </label>
+              <input
+                type="text"
+                value={paymentTerms}
+                onChange={(e) => setPaymentTerms(e.target.value)}
+                placeholder="e.g. Payment due within 20 days"
+                className="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-navy text-sm focus:border-navy focus:ring-2 focus:ring-navy/10 outline-none transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+                Payment instructions
+              </label>
+              <textarea
+                value={paymentInstructions}
+                onChange={(e) => setPaymentInstructions(e.target.value)}
+                rows={2}
+                placeholder="Bank name, account number, IBAN, or how to pay"
+                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-navy placeholder:text-muted-foreground focus:border-navy focus:ring-2 focus:ring-navy/10 outline-none resize-none transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
                 Notes (optional)
               </label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                rows={2}
-                placeholder="Payment terms, thank you message, etc."
-                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-navy placeholder:text-muted-foreground focus:border-navy focus:ring-2 focus:ring-navy/10 outline-none resize-none transition-all"
+                rows={3}
+                placeholder="Thank you message or extra notes"
+                className="w-full min-h-[80px] rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-navy placeholder:text-muted-foreground focus:border-navy focus:ring-2 focus:ring-navy/10 outline-none resize-y transition-all"
               />
             </div>
           </div>
@@ -482,9 +645,9 @@ function NewInvoiceContent() {
         </div>
 
         <div
-          className={`lg:w-[440px] shrink-0 ${showPreview ? "block" : "hidden lg:block"}`}
+          className={`w-full lg:w-2/5 min-w-0 lg:self-stretch ${showPreview ? "block" : "hidden lg:block"}`}
         >
-          <div className="sticky top-6">
+          <div className="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Live Preview
@@ -494,6 +657,14 @@ function NewInvoiceContent() {
                   {template.name}
                 </span>
                 <InvoiceDownloadMenu data={previewData} />
+                <button
+                  type="button"
+                  onClick={handleOpenSend}
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-navy text-white text-sm font-medium hover:bg-navy/90 transition-colors"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Send</span>
+                </button>
               </div>
             </div>
             {/* Desk surface + sharp paper sheet */}

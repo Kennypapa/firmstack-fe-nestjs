@@ -1,13 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   LayoutTemplate,
   Sparkles,
   Grid3X3,
-  PenLine,
+  Layers,
+  Zap,
+  Crown,
 } from "lucide-react";
 import {
   INVOICE_TEMPLATES,
@@ -18,29 +21,36 @@ import { InvoiceTemplateCard } from "@/components/invoices/InvoiceTemplateCard";
 
 const categoryIcons: Record<InvoiceTemplateCategory, typeof LayoutTemplate> = {
   all: LayoutTemplate,
-  simple: Sparkles,
-  modern: LayoutTemplate,
+  premium: Crown,
+  soft: Sparkles,
+  bold: Zap,
+  modern: Layers,
   classic: Grid3X3,
-  signature: PenLine,
 };
 
-export default function InvoiceTemplatesPage() {
+function InvoiceTemplatesContent() {
+  const searchParams = useSearchParams();
+  const clientId = searchParams.get("client");
   const [activeCategory, setActiveCategory] =
     useState<InvoiceTemplateCategory>("all");
- 
+
   const filtered = useMemo(() => {
     if (activeCategory === "all") return INVOICE_TEMPLATES;
     return INVOICE_TEMPLATES.filter((t) => t.category === activeCategory);
   }, [activeCategory]);
 
+  const backHref = clientId
+    ? `/dashboard/clients/${clientId}`
+    : "/dashboard/invoices";
+
   return (
     <div className="w-full font-onest">
       <Link
-        href="/dashboard/invoices"
+        href={backHref}
         className="inline-flex items-center gap-2 text-sm font-medium text-navy hover:text-navy/80 transition-colors mb-8"
       >
         <ArrowLeft className="w-4 h-4" />
-        Back to Invoices
+        {clientId ? "Back to Client" : "Back to Invoices"}
       </Link>
 
       <div className="text-center max-w-2xl mx-auto mb-8">
@@ -48,8 +58,8 @@ export default function InvoiceTemplatesPage() {
           Invoice templates
         </h1>
         <p className="mt-3 text-muted-foreground text-[15px] leading-relaxed">
-          Choose a style for your invoices. Your live preview updates to match
-          the template you select.
+          {INVOICE_TEMPLATES.length} professional invoice papers — full details,
+          logo, dates, totals, and signature on every template.
         </p>
       </div>
 
@@ -68,7 +78,13 @@ export default function InvoiceTemplatesPage() {
                   : "border-b-transparent text-muted-foreground font-medium hover:text-navy"
               }`}
             >
-              <Icon className="w-4 h-4" />
+              <Icon
+                className={`w-4 h-4 ${
+                  cat.id === "premium"
+                    ? "fill-amber-400 text-amber-500"
+                    : ""
+                }`}
+              />
               {cat.label}
             </button>
           );
@@ -77,7 +93,11 @@ export default function InvoiceTemplatesPage() {
 
       <div className="mx-auto max-w-6xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10 sm:gap-x-8 sm:gap-y-12 pb-10">
         {filtered.map((template) => (
-          <InvoiceTemplateCard key={template.id} template={template} />
+          <InvoiceTemplateCard
+            key={template.id}
+            template={template}
+            clientId={clientId}
+          />
         ))}
       </div>
 
@@ -87,5 +107,19 @@ export default function InvoiceTemplatesPage() {
         </p>
       )}
     </div>
+  );
+}
+
+export default function InvoiceTemplatesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-8 text-sm text-muted-foreground font-onest">
+          Loading templates…
+        </div>
+      }
+    >
+      <InvoiceTemplatesContent />
+    </Suspense>
   );
 }

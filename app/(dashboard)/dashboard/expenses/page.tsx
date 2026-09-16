@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Search,
   Plus,
@@ -9,17 +11,14 @@ import {
   Clock,
   Pencil,
   Trash2,
-  Upload,
-  X,
   Paperclip,
   FileText,
   ChevronLeft,
   ChevronRight,
+  Eye,
 } from "lucide-react";
 import { TableActionMenu } from "@/components/ui/TableActionMenu";
 import {
-  approveExpense,
-  createExpense,
   deleteExpense,
   listExpenses,
 } from "@/lib/api/expenses";
@@ -87,6 +86,7 @@ function formatMoney(amount: number) {
 }
 
 export default function ExpensesPage() {
+  const router = useRouter();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [aggregates, setAggregates] = useState({
@@ -96,7 +96,6 @@ export default function ExpensesPage() {
   });
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
-  const [modalOpen, setModalOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -112,20 +111,46 @@ export default function ExpensesPage() {
           : toExpenseCategory(categoryFilter),
     })
       .then((res) => {
+        let extras: Record<
+          string,
+          {
+            merchant?: string;
+            paymentMethod?: string;
+            hasReceipt?: boolean;
+            receiptName?: string;
+          }
+        > = {};
+        try {
+          extras = JSON.parse(
+            localStorage.getItem("firmstack-expense-extras") || "{}",
+          );
+        } catch {
+          extras = {};
+        }
+
         setExpenses(
-          res.data.map((exp) => ({
-            id: exp.id,
-            ref: `EXP-${exp.id.slice(0, 6).toUpperCase()}`,
-            date: exp.date.slice(0, 10),
-            merchant: fromExpenseCategory(exp.category),
-            category: fromExpenseCategory(exp.category),
-            description: exp.description,
-            amount: exp.amount,
-            paymentMethod: "—",
-            hasReceipt: Boolean(exp.receiptUrl),
-            addedBy: exp.addedBy,
-            status: formatExpenseStatus(exp.status) as ExpenseStatus,
-          })),
+          res.data.map((exp) => {
+            const local = extras[exp.id] || {};
+            return {
+              id: exp.id,
+              ref: `EXP-${exp.id.slice(0, 6).toUpperCase()}`,
+              date: exp.date.slice(0, 10),
+              merchant:
+                exp.merchant?.trim() ||
+                local.merchant?.trim() ||
+                "—",
+              category: fromExpenseCategory(exp.category),
+              description: exp.description?.trim() || "—",
+              amount: exp.amount,
+              paymentMethod:
+                exp.paymentMethod?.trim() ||
+                local.paymentMethod?.trim() ||
+                "—",
+              hasReceipt: Boolean(exp.receiptUrl) || Boolean(local.hasReceipt),
+              addedBy: exp.addedBy,
+              status: formatExpenseStatus(exp.status) as ExpenseStatus,
+            };
+          }),
         );
         setAggregates(res.aggregates);
       })
@@ -153,20 +178,30 @@ export default function ExpensesPage() {
 
   return (
     <div className="space-y-6 font-onest">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold text-navy">Expenses</h1>
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[260px] sm:min-w-[320px] sm:max-w-md lg:max-w-lg">
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h1 className="text-2xl font-bold text-navy tracking-tight">Expenses</h1>
+          <Link
+            href="/dashboard/expenses/new"
+            className="inline-flex items-center gap-2 rounded-xl bg-navy text-white font-semibold px-5 py-2.5 text-sm hover:bg-navy/90 transition-colors w-fit"
+          >
+            <Plus className="w-4 h-4" />
+            Add Expense
+          </Link>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="relative w-full sm:w-80 max-w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="search"
-              placeholder="Search by ID, merchant, category, description…"
+              placeholder="Search expenses…"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="w-full rounded-xl border border-gray-200 bg-white pl-9 pr-4 py-2.5 text-sm text-navy placeholder:text-muted-foreground focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none"
+              className="w-full rounded-xl border border-gray-200 bg-white pl-9 pr-4 py-2 text-sm text-navy placeholder:text-muted-foreground focus:border-navy focus:ring-2 focus:ring-navy/10 focus:outline-none transition-all"
             />
           </div>
           <select
@@ -175,7 +210,7 @@ export default function ExpensesPage() {
               setCategoryFilter(e.target.value);
               setPage(1);
             }}
-            className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-navy focus:border-navy focus:outline-none"
+            className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-navy focus:border-navy focus:ring-2 focus:ring-navy/10 focus:outline-none"
           >
             <option value="All">All categories</option>
             {categories.map((c) => (
@@ -184,14 +219,6 @@ export default function ExpensesPage() {
               </option>
             ))}
           </select>
-          <button
-            type="button"
-            onClick={() => setModalOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-navy text-white font-semibold px-4 py-2.5 hover:bg-navy/90 transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            Add Expense
-          </button>
         </div>
       </div>
 
@@ -254,13 +281,13 @@ export default function ExpensesPage() {
                   Date
                 </th>
                 <th className="px-5 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
-                  Merchant
+                  Paid to
                 </th>
                 <th className="px-5 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                   Category
                 </th>
                 <th className="px-5 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider min-w-[160px]">
-                  Description
+                  Notes
                 </th>
                 <th className="px-5 py-3 text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                   Amount
@@ -285,11 +312,56 @@ export default function ExpensesPage() {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={12}
-                    className="px-6 py-12 text-center text-muted-foreground"
-                  >
-                    No expenses found. Add your first expense to get started.
+                  <td colSpan={12} className="px-6 py-14">
+                    <div className="flex flex-col items-center justify-center gap-2.5 text-center">
+                      <svg
+                        viewBox="0 0 64 56"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="w-14 h-14"
+                        aria-hidden
+                      >
+                        <path
+                          d="M6 18.5C6 16.015 8.015 14 10.5 14H24.2c.8 0 1.55.38 2.02 1.02L28.5 18H53.5C55.985 18 58 20.015 58 22.5V46c0 2.485-2.015 4.5-4.5 4.5H10.5C8.015 50.5 6 48.485 6 46V18.5Z"
+                          stroke="#222e4d"
+                          strokeWidth="2.4"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M6 22.5H58"
+                          stroke="#222e4d"
+                          strokeWidth="2.4"
+                          strokeLinecap="round"
+                        />
+                        <path
+                          d="M24 30.5L28.5 35M28.5 30.5L24 35"
+                          stroke="#222e4d"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                        />
+                        <path
+                          d="M35.5 30.5L40 35M40 30.5L35.5 35"
+                          stroke="#222e4d"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                        />
+                        <path
+                          d="M27 41c2.2-2.4 7.8-2.4 10 0"
+                          stroke="#222e4d"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                        />
+                        <path
+                          d="M50 8.5l2.2-3.2M54.5 11l3.5-1.2M53 15.5l3.2 1.8"
+                          stroke="#222e4d"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <p className="text-sm font-medium text-navy/70">
+                        No expenses yet. Add your first expense to get started.
+                      </p>
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -299,7 +371,29 @@ export default function ExpensesPage() {
                   return (
                     <tr
                       key={exp.id}
-                      className="border-t border-gray-100 hover:bg-gray-50/50 transition-colors"
+                      className="border-t border-gray-100 hover:bg-gray-50/50 cursor-pointer transition-colors"
+                      onClick={() => {
+                        try {
+                          sessionStorage.setItem(
+                            `firmstack-expense-row:${exp.id}`,
+                            JSON.stringify({
+                              id: exp.id,
+                              date: exp.date,
+                              category: exp.category,
+                              description: exp.description,
+                              amount: exp.amount,
+                              addedBy: exp.addedBy,
+                              status: exp.status,
+                              merchant: exp.merchant,
+                              paymentMethod: exp.paymentMethod,
+                              receiptUrl: exp.hasReceipt ? "attached" : null,
+                            }),
+                          );
+                        } catch {
+                          /* ignore */
+                        }
+                        router.push(`/dashboard/expenses/${exp.id}`);
+                      }}
                     >
                       <td className="px-5 py-3.5 text-muted-foreground tabular-nums">
                         {rowNumber}
@@ -355,7 +449,10 @@ export default function ExpensesPage() {
                           {status.label}
                         </span>
                       </td>
-                      <td className="px-5 py-3.5 text-right">
+                      <td
+                        className="px-5 py-3.5 text-right"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <div className="flex justify-end">
                           <TableActionMenu
                             isOpen={activeMenu === exp.id}
@@ -367,17 +464,22 @@ export default function ExpensesPage() {
                             onClose={() => setActiveMenu(null)}
                             ariaLabel={`Actions for ${exp.ref}`}
                           >
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setActiveMenu(null);
-                                setModalOpen(true);
-                              }}
+                            <Link
+                              href={`/dashboard/expenses/${exp.id}`}
+                              onClick={() => setActiveMenu(null)}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-gray-50 transition-colors"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              View
+                            </Link>
+                            <Link
+                              href="/dashboard/expenses/new"
+                              onClick={() => setActiveMenu(null)}
                               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-gray-50 transition-colors"
                             >
                               <Pencil className="w-3.5 h-3.5" />
                               Edit
-                            </button>
+                            </Link>
                             <button
                               type="button"
                               onClick={() => {
@@ -452,26 +554,6 @@ export default function ExpensesPage() {
         </div>
       </div>
 
-      {modalOpen && (
-        <AddExpenseModal
-          onClose={() => setModalOpen(false)}
-          onSave={async (data) => {
-            await createExpense(data);
-            setModalOpen(false);
-            loadExpenses();
-            setToast("Expense saved successfully.");
-            setTimeout(() => setToast(null), 3000);
-          }}
-          onSaveAndAddAnother={async (data) => {
-            await createExpense(data);
-            loadExpenses();
-            setToast("Expense saved. Add another below.");
-            setTimeout(() => setToast(null), 3000);
-          }}
-          categories={categories}
-        />
-      )}
-
       {deleteConfirm && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
@@ -525,213 +607,3 @@ export default function ExpensesPage() {
   );
 }
 
-function AddExpenseModal({
-  onClose,
-  onSave,
-  onSaveAndAddAnother,
-  categories,
-}: {
-  onClose: () => void;
-  onSave: (data: {
-    date: string;
-    category: string;
-    description: string;
-    amount: number;
-  }) => Promise<void>;
-  onSaveAndAddAnother: (data: {
-    date: string;
-    category: string;
-    description: string;
-    amount: number;
-  }) => Promise<void>;
-  categories: string[];
-}) {
-  const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState(categories[0]);
-  const [merchant, setMerchant] = useState("");
-  const [description, setDescription] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("Company card");
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [dragOver, setDragOver] = useState(false);
-  const [saving, setSaving] = useState(false);
-
-  const buildPayload = () => ({
-    date,
-    category: toExpenseCategory(category),
-    description: description.trim() || merchant.trim() || category,
-    amount: parseFloat(amount),
-  });
-
-  const handleSubmit = async (
-    e: React.FormEvent,
-    andAnother = false,
-  ) => {
-    e.preventDefault();
-    if (!amount || Number.isNaN(parseFloat(amount))) return;
-    setSaving(true);
-    try {
-      const payload = buildPayload();
-      if (andAnother) {
-        await onSaveAndAddAnother(payload);
-        setAmount("");
-        setMerchant("");
-        setDescription("");
-      } else {
-        await onSave(payload);
-      }
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
-      onClick={onClose}
-    >
-      <div
-        className="rounded-2xl bg-white shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto font-onest"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between p-6 border-b border-gray-100">
-          <h2 className="text-xl font-bold text-navy">Add Expense</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 rounded-lg text-muted-foreground hover:bg-gray-100"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <form
-          className="p-6 space-y-5"
-          onSubmit={(e) => handleSubmit(e, false)}
-        >
-          <div>
-            <label className="block text-sm font-medium text-navy mb-1.5">
-              Amount
-            </label>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              required
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0.00"
-              className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-navy focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-navy mb-1.5">
-              Merchant / Vendor
-            </label>
-            <input
-              type="text"
-              value={merchant}
-              onChange={(e) => setMerchant(e.target.value)}
-              placeholder="e.g. Staples, Uber"
-              className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-navy placeholder:text-muted-foreground focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-navy mb-1.5">
-              Category
-            </label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-navy focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none"
-            >
-              {categories.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-navy mb-1.5">
-              Description
-            </label>
-            <input
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Brief description"
-              className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-navy placeholder:text-muted-foreground focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-navy mb-1.5">
-              Payment method
-            </label>
-            <select
-              value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-navy focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none"
-            >
-              <option>Company card</option>
-              <option>Personal card</option>
-              <option>Bank transfer</option>
-              <option>Cash</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-navy mb-1.5">
-              Date
-            </label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-navy focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-navy mb-1.5">
-              Upload Receipt (optional)
-            </label>
-            <div
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragOver(true);
-              }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDragOver(false);
-              }}
-              className={`border-2 border-dashed rounded-xl p-6 text-center text-sm text-muted-foreground transition-colors ${
-                dragOver
-                  ? "border-navy bg-navy/5"
-                  : "border-gray-200 hover:border-gray-300"
-              }`}
-            >
-              <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-              Drag and drop or click to upload
-            </div>
-          </div>
-          <div className="flex flex-col gap-3 pt-2">
-            <button
-              type="submit"
-              disabled={saving}
-              className="w-full rounded-xl bg-navy text-white font-semibold py-3 hover:bg-navy/90 disabled:opacity-60"
-            >
-              Save
-            </button>
-            <button
-              type="button"
-              disabled={saving}
-              onClick={(e) => handleSubmit(e, true)}
-              className="w-full rounded-xl border-2 border-navy text-navy font-semibold py-3 hover:bg-navy/5 disabled:opacity-60"
-            >
-              Save & Add Another
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}

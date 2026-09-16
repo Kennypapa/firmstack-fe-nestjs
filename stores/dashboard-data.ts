@@ -2,9 +2,9 @@ import { create } from 'zustand';
 import * as dashboardApi from '@/lib/api/dashboard';
 import { formatCurrency } from '@/lib/format';
 import {
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
+  Wallet,
+  Receipt,
+  BadgeDollarSign,
   FileText,
 } from 'lucide-react';
 
@@ -13,7 +13,7 @@ type MetricCard = {
   value: string;
   change: string;
   trend: 'up' | 'down' | 'neutral';
-  icon: typeof TrendingUp;
+  icon: typeof Wallet;
   color: string;
   bg: string;
   changeBg: string;
@@ -40,9 +40,9 @@ const defaultCards: MetricCard[] = [
     value: '$0',
     change: '0%',
     trend: 'up',
-    icon: TrendingUp,
-    color: 'text-emerald-600',
-    bg: 'bg-emerald-50',
+    icon: Wallet,
+    color: 'text-white',
+    bg: 'bg-emerald-600',
     changeBg: 'bg-emerald-50 text-emerald-700',
   },
   {
@@ -50,20 +50,20 @@ const defaultCards: MetricCard[] = [
     value: '$0',
     change: '0%',
     trend: 'up',
-    icon: TrendingDown,
-    color: 'text-amber-600',
-    bg: 'bg-amber-50',
-    changeBg: 'bg-amber-50 text-amber-700',
+    icon: Receipt,
+    color: 'text-white',
+    bg: 'bg-navy',
+    changeBg: 'bg-navy/10 text-navy',
   },
   {
     label: 'Net Profit',
     value: '$0',
     change: '0%',
     trend: 'up',
-    icon: DollarSign,
-    color: 'text-navy',
-    bg: 'bg-navy/[0.06]',
-    changeBg: 'bg-emerald-50 text-emerald-700',
+    icon: BadgeDollarSign,
+    color: 'text-white',
+    bg: 'bg-sky-500',
+    changeBg: 'bg-sky-50 text-sky-700',
   },
   {
     label: 'Total Invoices',
@@ -71,9 +71,9 @@ const defaultCards: MetricCard[] = [
     change: '0 pending',
     trend: 'neutral',
     icon: FileText,
-    color: 'text-violet-600',
-    bg: 'bg-violet-50',
-    changeBg: 'bg-violet-50 text-violet-700',
+    color: 'text-white',
+    bg: 'bg-amber-500',
+    changeBg: 'bg-amber-50 text-amber-700',
   },
 ];
 

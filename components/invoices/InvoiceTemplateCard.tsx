@@ -12,18 +12,25 @@ import { GALLERY_INVOICE_DATA } from "@/components/invoices/invoice-preview-type
 
 interface InvoiceTemplateCardProps {
   template: InvoiceTemplateMeta;
+  clientId?: string | null;
 }
 
-export function InvoiceTemplateCard({ template }: InvoiceTemplateCardProps) {
+export function InvoiceTemplateCard({
+  template,
+  clientId,
+}: InvoiceTemplateCardProps) {
   const router = useRouter();
   const [colorId, setColorId] = useState(template.defaultColorId);
   const selectedColor = getTemplateColor(template, colorId);
 
   const handleUse = () => {
     saveTemplatePreference(template.id, colorId);
-    router.push(
-      `/dashboard/invoices/new?template=${template.id}&color=${colorId}`
-    );
+    const params = new URLSearchParams({
+      template: template.id,
+      color: colorId,
+    });
+    if (clientId) params.set("client", clientId);
+    router.push(`/dashboard/invoices/new?${params.toString()}`);
   };
 
   return (
@@ -46,15 +53,19 @@ export function InvoiceTemplateCard({ template }: InvoiceTemplateCardProps) {
 
       <div className="rounded-2xl bg-[#e8eef4] px-4 pt-5 pb-4 sm:px-5 sm:pt-6 sm:pb-5">
         <div className="mx-auto w-full max-w-[240px]">
-          {/* Single white sheet — header, table, totals, footer all live inside */}
-          <div className="aspect-[3/4] bg-white rounded-sm shadow-[0_8px_28px_rgba(34,46,77,0.14)] overflow-hidden ring-1 ring-black/[0.04]">
+          <button
+            type="button"
+            onClick={handleUse}
+            aria-label={`Use ${template.name} template`}
+            className="aspect-[3/4] w-full bg-white rounded-sm shadow-[0_8px_28px_rgba(34,46,77,0.14)] overflow-hidden ring-1 ring-black/[0.04] transition-shadow hover:shadow-[0_12px_36px_rgba(34,46,77,0.2)] hover:ring-navy/20 cursor-pointer text-left"
+          >
             <InvoiceDocument
               templateId={template.id}
               data={GALLERY_INVOICE_DATA}
               gallery
               accentColor={selectedColor.accent}
             />
-          </div>
+          </button>
         </div>
 
         <div className="mt-5 flex items-center justify-between gap-3">
