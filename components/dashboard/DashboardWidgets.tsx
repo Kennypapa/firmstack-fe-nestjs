@@ -7,11 +7,14 @@ import {
   FileText,
   ArrowUpRight,
   ArrowRight,
-  Clock,
+  ChevronRight,
   Plus,
   GripVertical,
   Pin,
   Settings,
+  Receipt,
+  Users,
+  type LucideIcon,
 } from "lucide-react";
 import {
   BarChart,
@@ -26,14 +29,71 @@ import {
 } from "recharts";
 import { useDashboardLayoutStore } from "@/stores/dashboard-layout";
 import { useDashboardDataStore, type MetricCard } from "@/stores/dashboard-data";
-import { formatRelativeTime } from "@/lib/format";
 
-const activityColors: Record<string, string> = {
-  invoice: "bg-navy",
-  expense: "bg-amber-500",
-  settings: "bg-gray-400",
-  payment: "bg-emerald-500",
-  team: "bg-violet-500",
+function splitActivityAction(action: string) {
+  const idx = action.indexOf(": ");
+  if (idx === -1) return { title: action, detail: null as string | null };
+  return {
+    title: action.slice(0, idx).trim(),
+    detail: action.slice(idx + 2).trim() || null,
+  };
+}
+
+function activityMarginTime(iso: string) {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const minutes = Math.floor(diffMs / 60000);
+  if (minutes < 1) return "now";
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d`;
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function activityByline(user: string) {
+  const local = user.split("@")[0]?.trim();
+  if (!local) return user;
+  return local.replace(/[._-]+/g, " ");
+}
+
+const activityTypeMeta: Record<
+  string,
+  { icon: LucideIcon; href: string; label: string; iconWrap: string }
+> = {
+  invoice: {
+    icon: FileText,
+    href: "/dashboard/invoices",
+    label: "Invoice",
+    iconWrap: "bg-amber-500 text-white",
+  },
+  expense: {
+    icon: Receipt,
+    href: "/dashboard/expenses",
+    label: "Expense",
+    iconWrap: "bg-navy text-white",
+  },
+  payment: {
+    icon: DollarSign,
+    href: "/dashboard/invoices",
+    label: "Payment",
+    iconWrap: "bg-emerald-500 text-white",
+  },
+  team: {
+    icon: Users,
+    href: "/dashboard/employees",
+    label: "Team",
+    iconWrap: "bg-sky-500 text-white",
+  },
+  settings: {
+    icon: Settings,
+    href: "/dashboard/settings",
+    label: "Settings",
+    iconWrap: "bg-slate-500 text-white",
+  },
 };
 
 function CustomTooltip({ active, payload, label }: any) {
@@ -470,40 +530,70 @@ export function RecentActivityWidget() {
 
   return (
     <WidgetShell pinned>
-      <div className="p-4 sm:p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-[15px] font-semibold text-navy">Recent Activity</h2>
-          <span className="text-xs font-medium text-muted-foreground">Latest</span>
+      <div className="p-4 sm:p-5 h-full flex flex-col">
+        <div className="flex items-baseline justify-between gap-3 mb-3">
+          <h2 className="text-[15px] font-semibold text-navy tracking-tight">
+            Recent Activity
+          </h2>
+          <span className="text-[11px] uppercase tracking-[0.14em] text-navy/35 font-medium">
+            Latest
+          </span>
         </div>
+
         {recentActivity.length === 0 ? (
           <EmptyState message="No activity yet." />
         ) : (
-        <ul className="space-y-5">
-          {recentActivity.map((item, i) => (
-            <li key={i} className="flex gap-3">
-              <div className="relative mt-1.5">
-                <div className={`w-2 h-2 rounded-full ${activityColors[item.type] || "bg-gray-400"}`} />
-                {i < recentActivity.length - 1 && (
-                  <div className="absolute top-2.5 left-[3px] w-px h-[calc(100%+12px)] bg-gray-100" />
-                )}
-              </div>
-              <div className="flex-1 min-w-0 flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-[#1a2338] leading-tight">
-                    {item.user}
-                  </p>
-                  <p className="text-xs font-normal text-gray-600 mt-0.5 leading-snug">
-                    {item.action}
-                  </p>
-                </div>
-                <p className="shrink-0 text-[11px] font-medium text-gray-500 flex items-center gap-1 pt-0.5">
-                  <Clock className="w-3 h-3" />
-                  {formatRelativeTime(item.time)}
-                </p>
-              </div>
-            </li>
-          ))}
-        </ul>
+          <ul className="flex-1 min-h-0 overflow-y-auto space-y-2">
+            {recentActivity.map((item, i) => {
+              const { title, detail } = splitActivityAction(item.action);
+              const meta =
+                activityTypeMeta[item.type] || activityTypeMeta.settings;
+              const Icon = meta.icon;
+
+              return (
+                <li key={i}>
+                  <Link
+                    href={meta.href}
+                    className="group flex items-start gap-3 rounded-xl border border-gray-100/80 bg-white px-3 py-3 shadow-[0_2px_8px_rgba(34,46,77,0.08)] transition-shadow hover:shadow-[0_4px_14px_rgba(34,46,77,0.12)]"
+                  >
+                    <span
+                      className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${meta.iconWrap}`}
+                      aria-hidden
+                    >
+                      <Icon className="w-4 h-4" strokeWidth={2} />
+                    </span>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-[13px] font-semibold text-navy leading-snug pr-1">
+                          {title}
+                        </p>
+                        <time
+                          dateTime={item.time}
+                          className="shrink-0 pt-0.5 text-[11px] font-medium tabular-nums text-navy/40"
+                        >
+                          {activityMarginTime(item.time)}
+                        </time>
+                      </div>
+                      {detail && (
+                        <p className="mt-0.5 text-[12px] text-navy/55 leading-snug line-clamp-2">
+                          {detail}
+                        </p>
+                      )}
+                      <p className="mt-1 text-[11px] text-navy/35 truncate">
+                        {activityByline(item.user)} · {meta.label}
+                      </p>
+                    </div>
+
+                    <ChevronRight
+                      className="mt-1 w-4 h-4 shrink-0 text-navy/25 transition-colors group-hover:text-navy/50"
+                      aria-hidden
+                    />
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
         )}
       </div>
     </WidgetShell>
